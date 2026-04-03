@@ -24,9 +24,11 @@ import { useAuthStore } from '../../src/store/authStore';
 import { useChecklistStore, Checklist } from '../../src/store/checklistStore';
 import { useStatsStore } from '../../src/store/statsStore';
 import { useLocationStore } from '../../src/store/locationStore';
+import { useSharedListStore } from '../../src/store/sharedListStore';
 import { useLocation } from '../../src/hooks/useLocation';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 import { StatCard } from '../../src/components/StatCard';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -37,10 +39,12 @@ export default function HomeScreen() {
   const { checklists, fetchChecklists, setActiveChecklist } = useChecklistStore();
   const { stats, fetchStats } = useStatsStore();
   const { locations, fetchLocations, nearbyLocation } = useLocationStore();
+  const { lists: sharedLists, fetchLists: fetchSharedLists } = useSharedListStore();
   const { getCurrentPosition } = useLocation();
   
   const [refreshing, setRefreshing] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
+  const [promoDismissed, setPromoDismissed] = useState(false);
   
   const buttonScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.3);
@@ -49,6 +53,7 @@ export default function HomeScreen() {
     fetchChecklists();
     fetchStats();
     fetchLocations();
+    fetchSharedLists();
     
     // Try to get current position for location awareness
     getCurrentPosition().catch(() => {});
@@ -319,6 +324,89 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Animated.View>
         </View>
+
+        {/* Shared Lists Quick Access */}
+        <TouchableOpacity
+          style={[styles.sharedListsBtn, { backgroundColor: colors.card }, SHADOWS.small]}
+          onPress={() => router.push('/shared-lists')}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.sharedListsIcon, { backgroundColor: COLORS.success + '15' }]}>
+            <Ionicons name="people" size={18} color={COLORS.success} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.sharedListsTitle, { color: colors.text }]}>
+              Shared Lists
+            </Text>
+            <Text style={[styles.sharedListsSubtitle, { color: colors.textSecondary }]}>
+              Share checklists with family & friends
+            </Text>
+          </View>
+          {sharedLists.length > 0 && (
+            <View style={[styles.locationsBtnBadge, { backgroundColor: COLORS.success }]}>
+              <Text style={styles.locationsBtnBadgeText}>{sharedLists.length}</Text>
+            </View>
+          )}
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        {/* Premium Promo Card */}
+        {!user?.is_premium && !promoDismissed && (
+          <View style={[styles.promoCard, SHADOWS.medium]}>
+            <LinearGradient
+              colors={['#6366F1', '#8B5CF6', '#A855F7']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.promoGradient}
+            >
+              <TouchableOpacity
+                style={styles.promoDismiss}
+                onPress={() => setPromoDismissed(true)}
+              >
+                <Ionicons name="close" size={18} color="rgba(255,255,255,0.6)" />
+              </TouchableOpacity>
+              
+              <View style={styles.promoContent}>
+                <View style={styles.promoIconRow}>
+                  <Ionicons name="diamond" size={28} color="#fff" />
+                  <View style={styles.promoFeatures}>
+                    <View style={styles.promoFeatureTag}>
+                      <Ionicons name="location" size={10} color="#fff" />
+                      <Text style={styles.promoFeatureText}>Unlimited Locations</Text>
+                    </View>
+                    <View style={styles.promoFeatureTag}>
+                      <Ionicons name="notifications" size={10} color="#fff" />
+                      <Text style={styles.promoFeatureText}>Smart Reminders</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                <Text style={styles.promoTitle}>Unlock Full Power of Forgetly</Text>
+                <Text style={styles.promoSubtitle}>
+                  Never forget anything with unlimited locations, smart reminders, and advanced insights.
+                </Text>
+                
+                {locations.length >= 2 && (
+                  <View style={styles.promoAlert}>
+                    <Ionicons name="warning" size={14} color="#FFD700" />
+                    <Text style={styles.promoAlertText}>
+                      You've reached the free location limit!
+                    </Text>
+                  </View>
+                )}
+                
+                <TouchableOpacity
+                  style={styles.promoCTA}
+                  onPress={() => router.push('/paywall')}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="star" size={18} color="#6366F1" />
+                  <Text style={styles.promoCTAText}>Upgrade to Premium</Text>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -522,6 +610,114 @@ const styles = StyleSheet.create({
   locationsBtnBadgeText: {
     color: '#fff',
     fontSize: FONTS.sizes.xs,
+    fontWeight: 'bold',
+  },
+  sharedListsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.lg,
+  },
+  sharedListsIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.sm,
+  },
+  sharedListsTitle: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '600',
+  },
+  sharedListsSubtitle: {
+    fontSize: FONTS.sizes.xs,
+    marginTop: 1,
+  },
+  promoCard: {
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    marginBottom: SPACING.lg,
+  },
+  promoGradient: {
+    padding: SPACING.lg,
+  },
+  promoDismiss: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  promoContent: {},
+  promoIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  promoFeatures: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+  },
+  promoFeatureTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+    gap: 4,
+  },
+  promoFeatureText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  promoTitle: {
+    color: '#fff',
+    fontSize: FONTS.sizes.lg,
+    fontWeight: 'bold',
+    marginBottom: SPACING.xs,
+  },
+  promoSubtitle: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: FONTS.sizes.sm,
+    lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  promoAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,215,0,0.15)',
+    padding: SPACING.sm,
+    borderRadius: RADIUS.sm,
+    marginBottom: SPACING.md,
+    gap: SPACING.xs,
+  },
+  promoAlertText: {
+    color: '#FFD700',
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '600',
+  },
+  promoCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    gap: SPACING.xs,
+  },
+  promoCTAText: {
+    color: '#6366F1',
+    fontSize: FONTS.sizes.md,
     fontWeight: 'bold',
   },
 });

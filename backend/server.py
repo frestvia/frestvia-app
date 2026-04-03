@@ -146,6 +146,42 @@ class StatsResponse(BaseModel):
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
 
+# ======================== SHARED LIST MODELS ========================
+
+class SharedListItemCreate(BaseModel):
+    text: str
+    emoji: Optional[str] = None
+
+class SharedListItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    text: str
+    emoji: Optional[str] = None
+    checked_by: List[str] = []
+
+class SharedListCreate(BaseModel):
+    title: str
+    emoji: Optional[str] = None
+    items: List[SharedListItemCreate] = []
+
+class SharedListReminderCreate(BaseModel):
+    type: str  # "after_minutes" or "at_time"
+    minutes: Optional[int] = None
+    time: Optional[str] = None  # ISO format
+
+class SharedListResponse(BaseModel):
+    id: str
+    creator_id: str
+    creator_name: str
+    share_code: str
+    title: str
+    emoji: Optional[str] = None
+    items: List[SharedListItem]
+    members: List[dict]
+    status: str  # pending, in_progress, completed
+    reminders: List[dict] = []
+    created_at: datetime
+    updated_at: datetime
+
 # ======================== AUTH HELPERS ========================
 
 def hash_password(password: str) -> str:
@@ -644,6 +680,183 @@ async def deactivate_premium(user = Depends(get_current_user)):
     )
     user = await db.users.find_one({"id": user["id"]})
     return {"message": "Premium deactivated", "user": UserResponse(**{k: v for k, v in user.items() if k != 'password'})}
+
+import random
+import string
+
+def generate_share_code():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+# ======================== SHARED LISTS ROUTES ========================
+
+@api_router.post("/shared-lists", response_model=SharedListResponse)
+async def create_shared_list(data: SharedListCreate, user = Depends(get_current_user)):
+    share_code = generate_share_code()
+    # Ensure unique code
+    while await db.shared_lists.find_one({"share_code": share_code}):
+        share_code = generate_share_code()
+    
+    items = [
+        SharedListItem(text=item.text, emoji=item.emoji).dict()
+        for item in data.items
+    ]
+    
+    now = datetime.utcnow()
+    shared_list = {
+        "id": str(uuid.uuid4()),
+        "creator_id": user["id"],
+        "creator_name": user.get("name", "Guest User"),
+        "share_code": share_code,
+        "title": data.title,
+        "emoji": data.emoji,
+        "items": items,
+        "members": [{"id": user["id"], "name": user.get("name", "Guest User"), "role": "owner"}],
+        "status": "pending",
+        "reminders": [],
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.shared_lists.insert_one(shared_list)
+    return SharedListResponse(**shared_list)
+
+@api_router.get("/shared-lists", response_model=List[SharedListResponse])
+async def get_shared_lists(user = Depends(get_current_user)):
+    lists = await db.shared_lists.find({
+        "members.id": user["id"]
+    }).sort("updated_at", -1).to_list(100)
+    return [SharedListResponse(**sl) for sl in lists]
+
+@api_router.get("/shared-lists/{list_id}", response_model=SharedListResponse)
+async def get_shared_list(list_id: str, user = Depends(get_current_user)):
+    sl = await db.shared_lists.find_one({"id": list_id, "members.id": user["id"]})
+    if not sl:
+        raise HTTPException(status_code=404, detail="Shared list not found")
+    return SharedListResponse(**sl)
+
+@api_router.put("/shared-lists/{list_id}/toggle/{item_id}")
+async def toggle_shared_list_item(list_id: str, item_id: str, user = Depends(get_current_user)):
+    sl = await db.shared_lists.find_one({"id": list_id, "members.id": user["id"]})
+    if not sl:
+        raise HTTPException(status_code=404, detail="Shared list not found")
+    
+    items = sl.get("items", [])
+    updated = False
+    all_checked = True
+    
+    for item in items:
+        if item["id"] == item_id:
+            if user["id"] in item.get("checked_by", []):
+                item["checked_by"].remove(user["id"])
+            else:
+                if "checked_by" not in item:
+                    item["checked_by"] = []
+                item["checked_by"].append(user["id"])
+            updated = True
+        if not item.get("checked_by"):
+            all_checked = False
+    
+    if not updated:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Auto-update status
+    any_checked = any(item.get("checked_by") for item in items)
+    new_status = "completed" if all_checked else ("in_progress" if any_checked else "pending")
+    
+    await db.shared_lists.update_one(
+        {"id": list_id},
+        {"$set": {"items": items, "status": new_status, "updated_at": datetime.utcnow()}}
+    )
+    
+    sl = await db.shared_lists.find_one({"id": list_id})
+    return SharedListResponse(**sl)
+
+@api_router.post("/shared-lists/join")
+async def join_shared_list(share_code: str, user = Depends(get_current_user)):
+    sl = await db.shared_lists.find_one({"share_code": share_code.upper()})
+    if not sl:
+        raise HTTPException(status_code=404, detail="Invalid share code")
+    
+    # Check if already a member
+    member_ids = [m["id"] for m in sl.get("members", [])]
+    if user["id"] in member_ids:
+        return SharedListResponse(**sl)
+    
+    # Add as member
+    new_member = {"id": user["id"], "name": user.get("name", "Guest User"), "role": "member"}
+    await db.shared_lists.update_one(
+        {"id": sl["id"]},
+        {
+            "$push": {"members": new_member},
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
+    
+    sl = await db.shared_lists.find_one({"id": sl["id"]})
+    return SharedListResponse(**sl)
+
+@api_router.post("/shared-lists/{list_id}/reminder")
+async def set_shared_list_reminder(list_id: str, data: SharedListReminderCreate, user = Depends(get_current_user)):
+    sl = await db.shared_lists.find_one({"id": list_id, "members.id": user["id"]})
+    if not sl:
+        raise HTTPException(status_code=404, detail="Shared list not found")
+    
+    now = datetime.utcnow()
+    reminder = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": data.type,
+        "minutes": data.minutes,
+        "time": data.time,
+        "created_at": now.isoformat(),
+        "triggered": False
+    }
+    
+    await db.shared_lists.update_one(
+        {"id": list_id},
+        {
+            "$push": {"reminders": reminder},
+            "$set": {"updated_at": now}
+        }
+    )
+    
+    return {"message": "Reminder set!", "reminder": reminder}
+
+@api_router.post("/shared-lists/{list_id}/items")
+async def add_shared_list_item(list_id: str, data: SharedListItemCreate, user = Depends(get_current_user)):
+    sl = await db.shared_lists.find_one({"id": list_id, "members.id": user["id"]})
+    if not sl:
+        raise HTTPException(status_code=404, detail="Shared list not found")
+    
+    new_item = SharedListItem(text=data.text, emoji=data.emoji).dict()
+    
+    await db.shared_lists.update_one(
+        {"id": list_id},
+        {
+            "$push": {"items": new_item},
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
+    
+    sl = await db.shared_lists.find_one({"id": list_id})
+    return SharedListResponse(**sl)
+
+@api_router.delete("/shared-lists/{list_id}")
+async def delete_shared_list(list_id: str, user = Depends(get_current_user)):
+    sl = await db.shared_lists.find_one({"id": list_id})
+    if not sl:
+        raise HTTPException(status_code=404, detail="Shared list not found")
+    
+    if sl["creator_id"] != user["id"]:
+        # Just remove from members
+        await db.shared_lists.update_one(
+            {"id": list_id},
+            {"$pull": {"members": {"id": user["id"]}}}
+        )
+        return {"message": "Left shared list"}
+    
+    await db.shared_lists.delete_one({"id": list_id})
+    return {"message": "Shared list deleted"}
 
 # ======================== HEALTH CHECK ========================
 

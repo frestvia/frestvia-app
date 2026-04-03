@@ -180,6 +180,21 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: Location endpoints available in backend code. GET /api/locations and POST /api/locations implemented with proper free user limits (2 locations max). DELETE /api/locations/{id} also implemented."
 
+  - task: "Shared Lists CRUD + Join + Reminders"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented shared lists system with: POST /api/shared-lists (create), GET /api/shared-lists (list), GET /api/shared-lists/{id} (detail), PUT /api/shared-lists/{id}/toggle/{item_id} (toggle item check), POST /api/shared-lists/join?share_code=CODE (join via code), POST /api/shared-lists/{id}/reminder (set reminder), POST /api/shared-lists/{id}/items (add item), DELETE /api/shared-lists/{id} (delete/leave). Uses 6-char alphanumeric share codes. Auto-updates status (pending/in_progress/completed)."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: All shared lists endpoints working perfectly. Tested: Create shared list (returns 6-char share_code, pending status), Get all lists, Get list detail (full data with items/members), Toggle item (updates checked_by array, auto-updates status to in_progress/completed), Add item (Eggs with emoji), Set reminder (after_minutes type), Join via code (adds member with role), Delete/Leave list (creator deletes, member leaves). Error handling works (404 for invalid IDs/codes). All 10 test cases passed."
+
 frontend:
   - task: "Auth Screens (Login/Signup)"
     implemented: true
@@ -354,3 +369,5 @@ agent_communication:
     message: "Initial MVP implementation complete. All backend APIs and frontend screens are implemented. Please test all backend endpoints first focusing on authentication flow, checklist operations, and exit recording."
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETE: All 10 backend API endpoints tested successfully. Authentication (register/login/guest), checklist CRUD, exit recording, stats, and location management all working correctly. All edge cases (invalid credentials, unauthorized access, duplicate registration) handled properly. Backend is production-ready."
+  - agent: "testing"
+    message: "✅ SHARED LISTS TESTING COMPLETE: All 8 shared lists endpoints tested and working perfectly. Create shared list (6-char share codes, pending status), Get lists, Get detail, Toggle items (auto-status updates), Add items, Set reminders, Join via code, Delete/Leave functionality all working. Error handling for invalid IDs/codes working. 10/10 test cases passed. Backend shared lists feature is production-ready."
