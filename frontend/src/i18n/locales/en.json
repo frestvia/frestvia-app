@@ -17,6 +17,7 @@
     "yes": "Yes",
     "no": "No",
     "ok": "OK",
+    "or": "or",
     "error": "Error",
     "success": "Success",
     "loading": "Loading...",
@@ -54,7 +55,10 @@
     "riskScore": "Risk Score",
     "highRisk": "High chance of forgetting - check carefully!",
     "moderateRisk": "Moderate risk - stay focused!",
-    "lowRisk": "Looking good - keep it up!"
+    "lowRisk": "Looking good - keep it up!",
+    "nearLocation": "You're near",
+    "suggestedChecklist": "Suggested checklist",
+    "myLocations": "My Locations"
   },
   "checklists": {
     "title": "My Checklists",
@@ -82,7 +86,8 @@
     "goBack": "Go Back",
     "proceedAnyway": "Proceed Anyway",
     "perfectExit": "Perfect Exit!",
-    "nothingForgotten": "Nothing forgotten today"
+    "nothingForgotten": "Nothing forgotten today",
+    "location": "Location"
   },
   "stats": {
     "title": "Forgetting Insights",
@@ -117,7 +122,10 @@
     "appearance": "Appearance",
     "language": "Language",
     "settings": "Settings",
-    "version": "Version"
+    "version": "Version",
+    "premiumMember": "Premium Member",
+    "premiumActive": "All features unlocked",
+    "managePremium": "Manage Premium"
   },
   "premium": {
     "title": "Upgrade to Premium",
@@ -140,7 +148,25 @@
     "startTrial": "Start Free Trial",
     "cancelAnytime": "Cancel anytime. Recurring billing.",
     "comingSoon": "Coming Soon",
-    "comingSoonMessage": "Premium features will be available in the next update. Thank you for your interest!"
+    "comingSoonMessage": "Premium features will be available in the next update. Thank you for your interest!",
+    "alreadyPremium": "You're already Premium!",
+    "deactivate": "Deactivate Premium (Testing)",
+    "premiumDeactivated": "Premium deactivated"
+  },
+  "locations": {
+    "title": "My Locations",
+    "infoText": "Save your frequently visited places to get smart checklist suggestions when leaving.",
+    "noLocations": "No locations saved",
+    "addFirst": "Add your first location to get smart reminders",
+    "addLocation": "Add Location",
+    "locationName": "Location name (e.g., Home, Office)",
+    "detectGPS": "Detect My Location",
+    "locationDetected": "Location Detected!",
+    "gpsLinked": "GPS linked",
+    "deleteConfirm": "Delete \"{{name}}\"?",
+    "freeLimit": "{{count}} of {{max}} free locations used",
+    "upgradeForMore": "Upgrade for unlimited locations",
+    "enterName": "Please enter a location name"
   },
   "share": {
     "title": "Share Your Stats",
@@ -161,10 +187,15 @@
     "selectLanguage": "Select Language",
     "notifications": "Notifications",
     "voiceReminders": "Voice Reminders",
+    "voiceRemindersDesc": "Speak forgotten items aloud",
     "about": "About",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "rateApp": "Rate App"
+    "rateApp": "Rate App",
+    "premiumSection": "Premium",
+    "premiumStatus": "Premium Status",
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "voice": {
     "dontForget": "Hey! Don't forget your {{item}}!",

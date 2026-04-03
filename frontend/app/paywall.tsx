@@ -4,54 +4,62 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  useColorScheme,
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
+import { useAuthStore } from '../src/store/authStore';
+import { api } from '../src/services/api';
 import { Button } from '../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
+  const { refreshUser } = useAuthStore();
   
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [loading, setLoading] = useState(false);
   
   const features = [
-    { icon: 'location', text: 'Unlimited saved locations' },
-    { icon: 'analytics', text: 'Advanced insights & analytics' },
-    { icon: 'navigate', text: 'Background geofencing' },
-    { icon: 'list', text: 'Unlimited checklists' },
-    { icon: 'bulb', text: 'Smart suggestions' },
-    { icon: 'cloud', text: 'Cloud sync across devices' },
-    { icon: 'flame', text: 'Streak rewards & badges' },
-    { icon: 'mic', text: 'Custom voice alerts' },
+    { icon: 'location', text: t('premium.unlimitedLocations') },
+    { icon: 'analytics', text: t('premium.advancedInsights') },
+    { icon: 'navigate', text: t('premium.backgroundGeofencing') },
+    { icon: 'list', text: t('premium.unlimitedChecklists') },
+    { icon: 'bulb', text: t('premium.smartSuggestions') },
+    { icon: 'cloud', text: t('premium.cloudSync') },
+    { icon: 'flame', text: t('premium.streakRewards') },
+    { icon: 'mic', text: t('premium.customVoice') },
   ];
   
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
     setLoading(true);
-    // Simulate purchase - in real app, integrate with RevenueCat/IAP
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // For testing - activate premium via API
+      await api.post('/premium/activate');
+      await refreshUser();
       Alert.alert(
-        'Coming Soon',
-        'Premium features will be available in the next update. Thank you for your interest!',
-        [{ text: 'OK', onPress: () => router.back() }]
+        '🎉 ' + t('common.success'),
+        'Premium activated! Enjoy all features.',
+        [{ text: t('common.ok'), onPress: () => router.back() }]
       );
-    }, 1500);
+    } catch (error: any) {
+      Alert.alert(t('common.error'), error.message || 'Failed to activate premium');
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-          <Ionicons name="close" size={28} color={isDark ? COLORS.textDark : COLORS.text} />
+          <Ionicons name="close" size={28} color={colors.text} />
         </TouchableOpacity>
       </View>
       
@@ -64,18 +72,18 @@ export default function PaywallScreen() {
           <View style={styles.premiumIcon}>
             <Ionicons name="diamond" size={48} color="#fff" />
           </View>
-          <Text style={[styles.heroTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-            Upgrade to Premium
+          <Text style={[styles.heroTitle, { color: colors.text }]}>
+            {t('premium.title')}
           </Text>
-          <Text style={[styles.heroSubtitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-            Never forget anything, anywhere
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
+            {t('premium.subtitle')}
           </Text>
         </View>
         
         {/* Features */}
         <View style={[
           styles.featuresCard,
-          { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+          { backgroundColor: colors.card },
           SHADOWS.small,
         ]}>
           {features.map((feature, index) => (
@@ -84,13 +92,13 @@ export default function PaywallScreen() {
               style={[
                 styles.featureItem,
                 index < features.length - 1 && styles.featureItemBorder,
-                { borderBottomColor: isDark ? COLORS.borderDark : COLORS.border },
+                { borderBottomColor: colors.border },
               ]}
             >
               <View style={[styles.featureIcon, { backgroundColor: COLORS.premium + '20' }]}>
                 <Ionicons name={feature.icon as any} size={20} color={COLORS.premium} />
               </View>
-              <Text style={[styles.featureText, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+              <Text style={[styles.featureText, { color: colors.text }]}>
                 {feature.text}
               </Text>
               <Ionicons name="checkmark" size={20} color={COLORS.success} />
@@ -99,8 +107,8 @@ export default function PaywallScreen() {
         </View>
         
         {/* Pricing */}
-        <Text style={[styles.pricingTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-          Choose Your Plan
+        <Text style={[styles.pricingTitle, { color: colors.text }]}>
+          {t('premium.choosePlan')}
         </Text>
         
         <View style={styles.plans}>
@@ -108,7 +116,7 @@ export default function PaywallScreen() {
           <TouchableOpacity
             style={[
               styles.planCard,
-              { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+              { backgroundColor: colors.card },
               selectedPlan === 'monthly' && styles.planCardSelected,
               SHADOWS.small,
             ]}
@@ -116,19 +124,19 @@ export default function PaywallScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.planHeader}>
-              <Text style={[styles.planName, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-                Monthly
+              <Text style={[styles.planName, { color: colors.text }]}>
+                {t('premium.monthly')}
               </Text>
               {selectedPlan === 'monthly' && (
                 <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
               )}
             </View>
             <View style={styles.planPrice}>
-              <Text style={[styles.planPriceValue, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+              <Text style={[styles.planPriceValue, { color: colors.text }]}>
                 $2.99
               </Text>
-              <Text style={[styles.planPricePeriod, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-                /month
+              <Text style={[styles.planPricePeriod, { color: colors.textSecondary }]}>
+                {t('premium.perMonth')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -137,7 +145,7 @@ export default function PaywallScreen() {
           <TouchableOpacity
             style={[
               styles.planCard,
-              { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+              { backgroundColor: colors.card },
               selectedPlan === 'yearly' && styles.planCardSelected,
               SHADOWS.small,
             ]}
@@ -145,22 +153,22 @@ export default function PaywallScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.saveBadge}>
-              <Text style={styles.saveBadgeText}>SAVE 44%</Text>
+              <Text style={styles.saveBadgeText}>{t('premium.save', { percent: 44 })}</Text>
             </View>
             <View style={styles.planHeader}>
-              <Text style={[styles.planName, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-                Yearly
+              <Text style={[styles.planName, { color: colors.text }]}>
+                {t('premium.yearly')}
               </Text>
               {selectedPlan === 'yearly' && (
                 <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
               )}
             </View>
             <View style={styles.planPrice}>
-              <Text style={[styles.planPriceValue, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+              <Text style={[styles.planPriceValue, { color: colors.text }]}>
                 $19.99
               </Text>
-              <Text style={[styles.planPricePeriod, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-                /year
+              <Text style={[styles.planPricePeriod, { color: colors.textSecondary }]}>
+                {t('premium.perYear')}
               </Text>
             </View>
             <Text style={[styles.planMonthly, { color: COLORS.success }]}>
@@ -172,8 +180,8 @@ export default function PaywallScreen() {
         {/* Trial Notice */}
         <View style={styles.trialNotice}>
           <Ionicons name="gift" size={20} color={COLORS.primary} />
-          <Text style={[styles.trialText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-            7-day free trial included
+          <Text style={[styles.trialText, { color: colors.textSecondary }]}>
+            {t('premium.freeTrial')}
           </Text>
         </View>
       </ScrollView>
@@ -181,18 +189,18 @@ export default function PaywallScreen() {
       {/* Footer */}
       <View style={[
         styles.footer,
-        { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+        { backgroundColor: colors.card },
         SHADOWS.medium,
       ]}>
         <Button
-          title={selectedPlan === 'yearly' ? 'Start Free Trial - $19.99/year' : 'Start Free Trial - $2.99/month'}
+          title={`${t('premium.startTrial')} - ${selectedPlan === 'yearly' ? '$19.99/year' : '$2.99/month'}`}
           onPress={handlePurchase}
           loading={loading}
           size="large"
           style={styles.purchaseBtn}
         />
-        <Text style={[styles.terms, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-          Cancel anytime. Recurring billing.
+        <Text style={[styles.terms, { color: colors.textSecondary }]}>
+          {t('premium.cancelAnytime')}
         </Text>
       </View>
     </SafeAreaView>

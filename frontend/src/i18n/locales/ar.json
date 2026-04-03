@@ -17,6 +17,7 @@
     "yes": "نعم",
     "no": "لا",
     "ok": "حسناً",
+    "or": "أو",
     "error": "خطأ",
     "success": "نجاح",
     "loading": "جاري التحميل...",
@@ -54,7 +55,10 @@
     "riskScore": "نسبة النسيان",
     "highRisk": "احتمال كبير للنسيان - تحقق جيداً!",
     "moderateRisk": "خطر متوسط - ابق منتبهاً!",
-    "lowRisk": "أداء جيد - استمر هكذا!"
+    "lowRisk": "أداء جيد - استمر هكذا!",
+    "nearLocation": "أنت بالقرب من",
+    "suggestedChecklist": "القائمة المقترحة",
+    "myLocations": "مواقعي"
   },
   "checklists": {
     "title": "قوائمي",
@@ -82,7 +86,8 @@
     "goBack": "رجوع",
     "proceedAnyway": "متابعة",
     "perfectExit": "خروج مثالي!",
-    "nothingForgotten": "لم تنسَ شيئاً اليوم"
+    "nothingForgotten": "لم تنسَ شيئاً اليوم",
+    "location": "الموقع"
   },
   "stats": {
     "title": "إحصائيات النسيان",
@@ -117,7 +122,10 @@
     "appearance": "المظهر",
     "language": "اللغة",
     "settings": "الإعدادات",
-    "version": "الإصدار"
+    "version": "الإصدار",
+    "premiumMember": "عضو مميز",
+    "premiumActive": "جميع الميزات مفعلة",
+    "managePremium": "إدارة العضوية المميزة"
   },
   "premium": {
     "title": "الترقية للمميز",
@@ -140,7 +148,25 @@
     "startTrial": "ابدأ التجربة المجانية",
     "cancelAnytime": "إلغاء في أي وقت.",
     "comingSoon": "قريباً",
-    "comingSoonMessage": "الميزات المميزة ستكون متاحة في التحديث القادم. شكراً لاهتمامك!"
+    "comingSoonMessage": "الميزات المميزة ستكون متاحة في التحديث القادم. شكراً لاهتمامك!",
+    "alreadyPremium": "أنت بالفعل مميز!",
+    "deactivate": "إلغاء العضوية المميزة (تجربة)",
+    "premiumDeactivated": "تم إلغاء العضوية المميزة"
+  },
+  "locations": {
+    "title": "مواقعي",
+    "infoText": "احفظ الأماكن التي تزورها كثيراً للحصول على اقتراحات ذكية عند المغادرة.",
+    "noLocations": "لا توجد مواقع محفوظة",
+    "addFirst": "أضف أول موقع للحصول على تذكيرات ذكية",
+    "addLocation": "إضافة موقع",
+    "locationName": "اسم الموقع (مثل: المنزل، المكتب)",
+    "detectGPS": "اكتشف موقعي",
+    "locationDetected": "تم اكتشاف الموقع!",
+    "gpsLinked": "GPS مرتبط",
+    "deleteConfirm": "حذف \"{{name}}\"؟",
+    "freeLimit": "{{count}} من {{max}} مواقع مجانية مستخدمة",
+    "upgradeForMore": "ترقية لمواقع غير محدودة",
+    "enterName": "يرجى إدخال اسم الموقع"
   },
   "share": {
     "title": "شارك إحصائياتك",

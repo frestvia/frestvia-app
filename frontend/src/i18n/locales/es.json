@@ -17,6 +17,7 @@
     "yes": "Sí",
     "no": "No",
     "ok": "OK",
+    "or": "o",
     "error": "Error",
     "success": "Éxito",
     "loading": "Cargando...",
@@ -54,7 +55,10 @@
     "riskScore": "Puntuación de Riesgo",
     "highRisk": "Alta probabilidad de olvidar - ¡revisa bien!",
     "moderateRisk": "Riesgo moderado - ¡mantente atento!",
-    "lowRisk": "¡Vas muy bien - sigue así!"
+    "lowRisk": "¡Vas muy bien - sigue así!",
+    "nearLocation": "Estás cerca de",
+    "suggestedChecklist": "Lista sugerida",
+    "myLocations": "Mis Ubicaciones"
   },
   "checklists": {
     "title": "Mis Listas",

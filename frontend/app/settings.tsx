@@ -146,9 +146,14 @@ export default function SettingsScreen() {
               <View style={[styles.menuIcon, { backgroundColor: COLORS.warning + '20' }]}>
                 <Ionicons name="volume-high" size={20} color={COLORS.warning} />
               </View>
-              <Text style={[styles.menuText, { color: colors.text }]}>
-                {t('settings.voiceReminders')}
-              </Text>
+              <View>
+                <Text style={[styles.menuText, { color: colors.text }]}>
+                  {t('settings.voiceReminders')}
+                </Text>
+                <Text style={[styles.menuSubtext, { color: colors.textSecondary }]}>
+                  {t('settings.voiceRemindersDesc')}
+                </Text>
+              </View>
             </View>
             <View style={[
               styles.toggle,

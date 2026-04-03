@@ -136,7 +136,20 @@ export default function ProfileScreen() {
         </View>
         
         {/* Premium Card */}
-        {!user?.is_premium && (
+        {user?.is_premium ? (
+          <View style={[styles.premiumActiveCard, SHADOWS.medium]}>
+            <View style={styles.premiumContent}>
+              <Ionicons name="diamond" size={32} color="#fff" />
+              <View style={styles.premiumText}>
+                <Text style={styles.premiumTitle}>{t('profile.premiumMember')}</Text>
+                <Text style={styles.premiumSubtitle}>
+                  {t('profile.premiumActive')}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="checkmark-circle" size={24} color="#fff" />
+          </View>
+        ) : (
           <TouchableOpacity
             style={[styles.premiumCard, SHADOWS.medium]}
             onPress={() => router.push('/paywall')}
@@ -161,6 +174,23 @@ export default function ProfileScreen() {
           { backgroundColor: colors.card },
           SHADOWS.small,
         ]}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/locations')}
+          >
+            <View style={styles.menuLeft}>
+              <View style={[styles.menuIcon, { backgroundColor: COLORS.error + '20' }]}>
+                <Ionicons name="location" size={20} color={COLORS.error} />
+              </View>
+              <Text style={[styles.menuText, { color: colors.text }]}>
+                {t('locations.title')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+          
+          <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+          
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push('/share-card')}
@@ -360,6 +390,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.premium,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  premiumActiveCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.success,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.lg,

@@ -623,6 +623,28 @@ async def get_suggestions(user = Depends(get_current_user)):
     
     return {"suggestions": suggestions}
 
+# ======================== PREMIUM (TEST) ========================
+
+@api_router.post("/premium/activate")
+async def activate_premium(user = Depends(get_current_user)):
+    """Activate premium for testing purposes"""
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"is_premium": True}}
+    )
+    user = await db.users.find_one({"id": user["id"]})
+    return {"message": "Premium activated!", "user": UserResponse(**{k: v for k, v in user.items() if k != 'password'})}
+
+@api_router.post("/premium/deactivate")
+async def deactivate_premium(user = Depends(get_current_user)):
+    """Deactivate premium for testing purposes"""
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"is_premium": False}}
+    )
+    user = await db.users.find_one({"id": user["id"]})
+    return {"message": "Premium deactivated", "user": UserResponse(**{k: v for k, v in user.items() if k != 'password'})}
+
 # ======================== HEALTH CHECK ========================
 
 @api_router.get("/")

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  useColorScheme,
   TouchableOpacity,
   Alert,
   Vibration,
@@ -25,20 +24,20 @@ import { useAuthStore } from '../src/store/authStore';
 import { useSpeech } from '../src/hooks/useSpeech';
 import { ChecklistItemRow } from '../src/components/ChecklistItemRow';
 import { Button } from '../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
+import { useTranslation } from 'react-i18next';
 
 export default function ExitModeScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
   
   const { activeChecklist, toggleItem, resetChecklist } = useChecklistStore();
   const { recordExit, fetchStats } = useStatsStore();
   const { refreshUser } = useAuthStore();
-  const { speakReminder, speakSuccess, stop } = useSpeech();
+  const { speakReminder, speakSuccess, speakMultipleReminders, stop } = useSpeech();
   
   const [isComplete, setIsComplete] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   
   const scale = useSharedValue(1);
@@ -82,12 +81,12 @@ export default function ExitModeScreen() {
         .map((i) => i.name);
       
       Alert.alert(
-        'Items Not Checked',
-        `You haven't checked: ${forgottenNames.join(', ')}. Do you want to proceed anyway?`,
+        t('exitMode.itemsNotChecked'),
+        t('exitMode.notCheckedMessage', { items: forgottenNames.join(', ') }),
         [
-          { text: 'Go Back', style: 'cancel' },
+          { text: t('exitMode.goBack'), style: 'cancel' },
           {
-            text: 'Proceed Anyway',
+            text: t('exitMode.proceedAnyway'),
             onPress: () => completeExit(checkedItems, forgottenItems),
           },
         ]
@@ -114,9 +113,7 @@ export default function ExitModeScreen() {
         // Perfect exit!
         successScale.value = withSpring(1);
         Vibration.vibrate([0, 100, 50, 100]);
-        if (voiceEnabled) {
-          speakSuccess();
-        }
+        speakSuccess();
         
         setTimeout(() => {
           router.back();
@@ -125,14 +122,15 @@ export default function ExitModeScreen() {
           }, 300);
         }, 1500);
       } else {
-        // Some forgotten items
-        if (voiceEnabled) {
-          const forgottenName = activeChecklist.items.find(
-            (i) => forgottenItems.includes(i.id)
-          )?.name;
-          if (forgottenName) {
-            speakReminder(forgottenName);
-          }
+        // Some forgotten items - speak them out!
+        const forgottenNames = activeChecklist.items
+          .filter((i) => forgottenItems.includes(i.id))
+          .map((i) => i.name);
+        
+        if (forgottenNames.length === 1) {
+          speakReminder(forgottenNames[0]);
+        } else if (forgottenNames.length > 1) {
+          speakMultipleReminders(forgottenNames);
         }
         router.back();
       }
@@ -157,14 +155,14 @@ export default function ExitModeScreen() {
   const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.closeBtn}
           onPress={() => router.back()}
         >
-          <Ionicons name="close" size={28} color={isDark ? COLORS.textDark : COLORS.text} />
+          <Ionicons name="close" size={28} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>

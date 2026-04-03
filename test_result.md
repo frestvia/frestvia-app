@@ -277,6 +277,54 @@ frontend:
         agent: "main"
         comment: "Implemented shareable stats card for social sharing"
 
+  - task: "Location Management Screen (Frontend)"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/locations.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented locations screen with GPS detection, add/delete locations, free tier limits, and premium upgrade link. Verified via screenshots - adding location works end-to-end."
+
+  - task: "Premium Badge in Profile"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/(tabs)/profile.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added green premium badge in profile when user is premium. Shows 'Premium Member - All features unlocked'. Also added My Locations shortcut in profile menu."
+
+  - task: "Enhanced TTS with Multi-language Support"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/hooks/useSpeech.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced useSpeech hook with language-aware TTS (EN/AR/ES/TR/UR), multiple reminder messages, speakMultipleReminders for forgotten items, integrated with settingsStore voiceEnabled."
+
+  - task: "Home Screen Location Awareness"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/(tabs)/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added My Locations button with badge count, nearby location detection card, location store integration. Verified via screenshots."
+
   - task: "Paywall Screen"
     implemented: true
     working: "NA"

@@ -23,6 +23,8 @@ import Animated, {
 import { useAuthStore } from '../../src/store/authStore';
 import { useChecklistStore, Checklist } from '../../src/store/checklistStore';
 import { useStatsStore } from '../../src/store/statsStore';
+import { useLocationStore } from '../../src/store/locationStore';
+import { useLocation } from '../../src/hooks/useLocation';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 import { StatCard } from '../../src/components/StatCard';
 
@@ -34,6 +36,8 @@ export default function HomeScreen() {
   const { user } = useAuthStore();
   const { checklists, fetchChecklists, setActiveChecklist } = useChecklistStore();
   const { stats, fetchStats } = useStatsStore();
+  const { locations, fetchLocations, nearbyLocation } = useLocationStore();
+  const { getCurrentPosition } = useLocation();
   
   const [refreshing, setRefreshing] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
@@ -44,6 +48,10 @@ export default function HomeScreen() {
   useEffect(() => {
     fetchChecklists();
     fetchStats();
+    fetchLocations();
+    
+    // Try to get current position for location awareness
+    getCurrentPosition().catch(() => {});
     
     pulseOpacity.value = withRepeat(
       withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -192,6 +200,43 @@ export default function HomeScreen() {
             </Text>
           </View>
         )}
+        
+        {/* Nearby Location Alert */}
+        {nearbyLocation && (
+          <View style={[
+            styles.nearbyCard,
+            { backgroundColor: COLORS.success + '15' },
+          ]}>
+            <Ionicons name="location" size={20} color={COLORS.success} />
+            <View style={styles.nearbyInfo}>
+              <Text style={[styles.nearbyLabel, { color: COLORS.success }]}>
+                {t('home.nearLocation')}
+              </Text>
+              <Text style={[styles.nearbyName, { color: colors.text }]}>
+                {nearbyLocation.name}
+              </Text>
+            </View>
+            <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+          </View>
+        )}
+        
+        {/* Locations Quick Access */}
+        <TouchableOpacity
+          style={[styles.locationsBtn, { backgroundColor: colors.card }, SHADOWS.small]}
+          onPress={() => router.push('/locations')}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.locationsBtnIcon, { backgroundColor: COLORS.primary + '15' }]}>
+            <Ionicons name="location" size={18} color={COLORS.primary} />
+          </View>
+          <Text style={[styles.locationsBtnText, { color: colors.text }]}>
+            {t('home.myLocations')}
+          </Text>
+          <View style={styles.locationsBtnBadge}>
+            <Text style={styles.locationsBtnBadgeText}>{locations.length}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
         
         {/* Checklist Selector */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -424,5 +469,59 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     fontSize: FONTS.sizes.xs,
     marginTop: SPACING.xs,
+  },
+  nearbyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  nearbyInfo: {
+    flex: 1,
+    marginLeft: SPACING.sm,
+  },
+  nearbyLabel: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '600',
+  },
+  nearbyName: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '600',
+  },
+  locationsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.lg,
+  },
+  locationsBtnIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.sm,
+  },
+  locationsBtnText: {
+    flex: 1,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '600',
+  },
+  locationsBtnBadge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.full,
+    minWidth: 22,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    marginRight: SPACING.sm,
+  },
+  locationsBtnBadgeText: {
+    color: '#fff',
+    fontSize: FONTS.sizes.xs,
+    fontWeight: 'bold',
   },
 });
