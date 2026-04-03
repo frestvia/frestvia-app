@@ -53,9 +53,16 @@ Mobile app for iOS/Android that helps users avoid forgetting important items whe
 - Custom voice alerts
 - Streak rewards
 
+## Upcoming Features
+- P1: Smart Suggestions (auto-suggest items based on forgetting history)
+- P2: Background Geofencing (premium)
+- P2: Push Notifications & Local Scheduling  
+- P3: Cloud Sync / Firebase Auth
+
 ## API Endpoints
 - Auth: POST /api/auth/register, /login, /guest, /test-premium
 - Checklists: GET/POST/PUT/DELETE /api/checklists
 - Stats: GET /api/stats
 - Exits: GET/POST /api/exits
 - Locations: GET/POST/DELETE /api/locations
+- Shared Lists: GET/POST /api/shared-lists, PUT toggle, POST join, POST reminder, POST items, DELETE
