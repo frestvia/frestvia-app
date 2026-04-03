@@ -302,10 +302,11 @@ export default function SettingsScreen() {
           activeOpacity={1}
           onPress={() => setShowLanguageModal(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, maxHeight: '75%' }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
               {t('settings.selectLanguage')}
             </Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
             {LANGUAGES.map((lang) => (
               <TouchableOpacity
                 key={lang.code}
@@ -332,6 +333,7 @@ export default function SettingsScreen() {
                 )}
               </TouchableOpacity>
             ))}
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>

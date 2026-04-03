@@ -179,7 +179,7 @@ export default function ExitModeScreen() {
           <Ionicons
             name={voiceEnabled ? 'volume-high' : 'volume-mute'}
             size={24}
-            color={voiceEnabled ? COLORS.primary : COLORS.textSecondary}
+            color={voiceEnabled ? COLORS.primary : colors.textSecondary}
           />
         </TouchableOpacity>
       </View>
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   successSubtext: {
     fontSize: FONTS.sizes.md,
-    color: COLORS.textSecondary,
+    color: COLORS.light.textSecondary,
     marginTop: SPACING.xs,
   },
 });

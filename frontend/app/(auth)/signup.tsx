@@ -95,7 +95,7 @@ export default function SignupScreen() {
               <Ionicons
                 name="person-outline"
                 size={20}
-                color={COLORS.textSecondary}
+                color={colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
@@ -107,7 +107,7 @@ export default function SignupScreen() {
                   },
                 ]}
                 placeholder="Full Name"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -118,7 +118,7 @@ export default function SignupScreen() {
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color={COLORS.textSecondary}
+                color={colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
@@ -130,7 +130,7 @@ export default function SignupScreen() {
                   },
                 ]}
                 placeholder="Email"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -142,7 +142,7 @@ export default function SignupScreen() {
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color={COLORS.textSecondary}
+                color={colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
@@ -154,7 +154,7 @@ export default function SignupScreen() {
                   },
                 ]}
                 placeholder="Password"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -166,7 +166,7 @@ export default function SignupScreen() {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color={COLORS.textSecondary}
+                  color={colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -175,7 +175,7 @@ export default function SignupScreen() {
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color={COLORS.textSecondary}
+                color={colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
@@ -187,7 +187,7 @@ export default function SignupScreen() {
                   },
                 ]}
                 placeholder="Confirm Password"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}

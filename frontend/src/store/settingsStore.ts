@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { changeLanguage, isRTL } from '../i18n';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type Language = 'en' | 'ar' | 'ur' | 'tr' | 'es';
+export type Language = 'en' | 'ar' | 'ur' | 'tr' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'hi' | 'id' | 'ru' | 'zh' | 'ja' | 'ko';
 
 interface SettingsState {
   theme: ThemeMode;

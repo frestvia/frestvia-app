@@ -33,7 +33,7 @@ export const Button: React.FC<Props> = ({
   icon,
 }) => {
   const getBackgroundColor = () => {
-    if (disabled) return COLORS.textSecondary;
+    if (disabled) return COLORS.light.textSecondary;
     switch (variant) {
       case 'primary':
         return COLORS.primary;

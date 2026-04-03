@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -14,7 +13,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { COLORS, SPACING, RADIUS, FONTS } from '../constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../constants/theme';
 
 interface Props {
   name: string;
@@ -31,8 +30,7 @@ export const ChecklistItemRow: React.FC<Props> = ({
   onDelete,
   showDelete = false,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
   
   const scale = useSharedValue(1);
   
@@ -56,14 +54,10 @@ export const ChecklistItemRow: React.FC<Props> = ({
           {
             backgroundColor: checked
               ? COLORS.successLight
-              : isDark
-              ? COLORS.cardDark
-              : COLORS.card,
+              : colors.card,
             borderColor: checked
               ? COLORS.success
-              : isDark
-              ? COLORS.borderDark
-              : COLORS.border,
+              : colors.border,
           },
         ]}
         onPress={handlePress}
@@ -74,7 +68,7 @@ export const ChecklistItemRow: React.FC<Props> = ({
             styles.checkbox,
             {
               backgroundColor: checked ? COLORS.success : 'transparent',
-              borderColor: checked ? COLORS.success : COLORS.textSecondary,
+              borderColor: checked ? COLORS.success : colors.textSecondary,
             },
           ]}
         >
@@ -87,9 +81,7 @@ export const ChecklistItemRow: React.FC<Props> = ({
             {
               color: checked
                 ? COLORS.success
-                : isDark
-                ? COLORS.textDark
-                : COLORS.text,
+                : colors.text,
               textDecorationLine: checked ? 'line-through' : 'none',
             },
           ]}

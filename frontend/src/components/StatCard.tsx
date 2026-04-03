@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../constants/theme';
 
 interface Props {
   title: string;
@@ -18,15 +18,14 @@ export const StatCard: React.FC<Props> = ({
   color = COLORS.primary,
   subtitle,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors } = useTheme();
   
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
+          backgroundColor: colors.card,
         },
         SHADOWS.small,
       ]}
@@ -37,7 +36,7 @@ export const StatCard: React.FC<Props> = ({
       <Text
         style={[
           styles.value,
-          { color: isDark ? COLORS.textDark : COLORS.text },
+          { color: colors.text },
         ]}
       >
         {value}
@@ -45,7 +44,7 @@ export const StatCard: React.FC<Props> = ({
       <Text
         style={[
           styles.title,
-          { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary },
+          { color: colors.textSecondary },
         ]}
       >
         {title}

@@ -367,7 +367,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column-reverse',
     borderRadius: RADIUS.sm,
     overflow: 'hidden',
-    backgroundColor: '#E2E8F0',
   },
   bar: {
     width: '100%',
@@ -411,7 +410,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   forgottenLeft: {
     flexDirection: 'row',

@@ -359,7 +359,9 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Dark Mode Global Fix - Phase 1"
+    - "Multi-language Expansion - Phase 3"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -371,3 +373,5 @@ agent_communication:
     message: "✅ BACKEND TESTING COMPLETE: All 10 backend API endpoints tested successfully. Authentication (register/login/guest), checklist CRUD, exit recording, stats, and location management all working correctly. All edge cases (invalid credentials, unauthorized access, duplicate registration) handled properly. Backend is production-ready."
   - agent: "testing"
     message: "✅ SHARED LISTS TESTING COMPLETE: All 8 shared lists endpoints tested and working perfectly. Create shared list (6-char share codes, pending status), Get lists, Get detail, Toggle items (auto-status updates), Add items, Set reminders, Join via code, Delete/Leave functionality all working. Error handling for invalid IDs/codes working. 10/10 test cases passed. Backend shared lists feature is production-ready."
+  - agent: "main"
+    message: "Phase 1 Dark Mode + Theme Fixes complete: Fixed ChecklistItemRow, StatCard, Button, index.tsx, stats.tsx, history.tsx, signup.tsx, exit-mode.tsx. All COLORS.textSecondary/cardDark/textDark/borderDark broken references fixed to use useTheme() hook. All hardcoded #E2E8F0 removed. Phase 3 Multi-language: Registered 10 new languages (fr, de, it, pt, hi, id, ru, zh, ja, ko) in i18n/index.ts, expanded Language type in settingsStore.ts, made language picker scrollable in settings.tsx. All verified via screenshots."

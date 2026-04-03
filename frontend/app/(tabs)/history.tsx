@@ -72,7 +72,7 @@ export default function HistoryScreen() {
         
         {Object.keys(groupedExits).length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="time-outline" size={64} color={COLORS.textSecondary} />
+            <Ionicons name="time-outline" size={64} color={COLORS.light.textSecondary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               No exit history yet
             </Text>

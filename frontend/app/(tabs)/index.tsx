@@ -303,8 +303,8 @@ export default function HomeScreen() {
             <Text style={[styles.previewTitle, { color: colors.text }]}>
               {selectedChecklist.name}
             </Text>
-            <Text style={[styles.previewItems, { color: colors.textSecondary }]}>
-              {selectedChecklist.items.map(i => i.name).join(' \u2022 ')}
+            <Text style={[styles.previewItems, { color: colors.textSecondary }]} numberOfLines={3}>
+              {selectedChecklist.items.map(i => i.name).join(' · ')}
             </Text>
             <Text style={[styles.previewCount, { color: COLORS.primary }]}>
               {t('home.itemsToCheck', { count: selectedChecklist.items.length })}
@@ -477,7 +477,6 @@ const styles = StyleSheet.create({
   },
   riskBar: {
     height: 8,
-    backgroundColor: '#E2E8F0',
     borderRadius: RADIUS.full,
     marginBottom: SPACING.sm,
   },
