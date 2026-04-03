@@ -1,0 +1,367 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  useColorScheme,
+  TouchableOpacity,
+  Alert,
+  Vibration,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withSequence,
+  runOnJS,
+} from 'react-native-reanimated';
+import { useChecklistStore } from '../src/store/checklistStore';
+import { useStatsStore } from '../src/store/statsStore';
+import { useAuthStore } from '../src/store/authStore';
+import { useSpeech } from '../src/hooks/useSpeech';
+import { ChecklistItemRow } from '../src/components/ChecklistItemRow';
+import { Button } from '../src/components/Button';
+import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
+
+export default function ExitModeScreen() {
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
+  const { activeChecklist, toggleItem, resetChecklist } = useChecklistStore();
+  const { recordExit, fetchStats } = useStatsStore();
+  const { refreshUser } = useAuthStore();
+  const { speakReminder, speakSuccess, stop } = useSpeech();
+  
+  const [isComplete, setIsComplete] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [loading, setLoading] = useState(false);
+  
+  const scale = useSharedValue(1);
+  const successScale = useSharedValue(0);
+  
+  useEffect(() => {
+    if (!activeChecklist) {
+      router.back();
+    } else {
+      // Reset checklist when entering exit mode
+      resetChecklist(activeChecklist.id);
+    }
+    
+    return () => {
+      stop();
+    };
+  }, []);
+  
+  useEffect(() => {
+    if (activeChecklist) {
+      const allChecked = activeChecklist.items.every((item) => item.checked);
+      setIsComplete(allChecked && activeChecklist.items.length > 0);
+    }
+  }, [activeChecklist]);
+  
+  const handleToggle = (itemId: string) => {
+    if (!activeChecklist) return;
+    toggleItem(activeChecklist.id, itemId);
+    Vibration.vibrate(50);
+  };
+  
+  const handleFinish = async () => {
+    if (!activeChecklist) return;
+    
+    const checkedItems = activeChecklist.items.filter((i) => i.checked).map((i) => i.id);
+    const forgottenItems = activeChecklist.items.filter((i) => !i.checked).map((i) => i.id);
+    
+    if (forgottenItems.length > 0) {
+      const forgottenNames = activeChecklist.items
+        .filter((i) => !i.checked)
+        .map((i) => i.name);
+      
+      Alert.alert(
+        'Items Not Checked',
+        `You haven't checked: ${forgottenNames.join(', ')}. Do you want to proceed anyway?`,
+        [
+          { text: 'Go Back', style: 'cancel' },
+          {
+            text: 'Proceed Anyway',
+            onPress: () => completeExit(checkedItems, forgottenItems),
+          },
+        ]
+      );
+    } else {
+      completeExit(checkedItems, forgottenItems);
+    }
+  };
+  
+  const completeExit = async (checkedItems: string[], forgottenItems: string[]) => {
+    if (!activeChecklist) return;
+    
+    setLoading(true);
+    try {
+      await recordExit({
+        checklist_id: activeChecklist.id,
+        checked_items: checkedItems,
+        forgotten_items: forgottenItems,
+      });
+      
+      await Promise.all([fetchStats(), refreshUser()]);
+      
+      if (forgottenItems.length === 0) {
+        // Perfect exit!
+        successScale.value = withSpring(1);
+        Vibration.vibrate([0, 100, 50, 100]);
+        if (voiceEnabled) {
+          speakSuccess();
+        }
+        
+        setTimeout(() => {
+          router.back();
+          setTimeout(() => {
+            router.push('/share-card');
+          }, 300);
+        }, 1500);
+      } else {
+        // Some forgotten items
+        if (voiceEnabled) {
+          const forgottenName = activeChecklist.items.find(
+            (i) => forgottenItems.includes(i.id)
+          )?.name;
+          if (forgottenName) {
+            speakReminder(forgottenName);
+          }
+        }
+        router.back();
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const successAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: successScale.value }],
+    opacity: successScale.value,
+  }));
+  
+  if (!activeChecklist) {
+    return null;
+  }
+  
+  const checkedCount = activeChecklist.items.filter((i) => i.checked).length;
+  const totalCount = activeChecklist.items.length;
+  const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
+  
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="close" size={28} color={isDark ? COLORS.textDark : COLORS.text} />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={[styles.headerTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+            Exit Mode
+          </Text>
+          <Text style={[styles.headerSubtitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            {activeChecklist.name}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.voiceBtn}
+          onPress={() => setVoiceEnabled(!voiceEnabled)}
+        >
+          <Ionicons
+            name={voiceEnabled ? 'volume-high' : 'volume-mute'}
+            size={24}
+            color={voiceEnabled ? COLORS.primary : COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
+      
+      {/* Progress */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressHeader}>
+          <Text style={[styles.progressText, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+            {checkedCount} of {totalCount} checked
+          </Text>
+          <Text style={[styles.progressPercent, { color: COLORS.primary }]}>
+            {Math.round(progress)}%
+          </Text>
+        </View>
+        <View style={[styles.progressBar, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${progress}%`,
+                backgroundColor: isComplete ? COLORS.success : COLORS.primary,
+              },
+            ]}
+          />
+        </View>
+      </View>
+      
+      {/* Items List */}
+      <ScrollView
+        style={styles.itemsList}
+        contentContainerStyle={styles.itemsContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.sectionTitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+          Tap each item you have with you
+        </Text>
+        {activeChecklist.items.map((item) => (
+          <ChecklistItemRow
+            key={item.id}
+            name={item.name}
+            checked={item.checked}
+            onToggle={() => handleToggle(item.id)}
+          />
+        ))}
+      </ScrollView>
+      
+      {/* Footer */}
+      <View style={[
+        styles.footer,
+        { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+        SHADOWS.medium,
+      ]}>
+        {isComplete ? (
+          <Button
+            title="All Done - Go!"
+            onPress={handleFinish}
+            loading={loading}
+            size="large"
+            variant="secondary"
+            style={{ flex: 1 }}
+            icon={<Ionicons name="checkmark-circle" size={24} color="#fff" />}
+          />
+        ) : (
+          <Button
+            title="Finish Anyway"
+            onPress={handleFinish}
+            loading={loading}
+            size="large"
+            style={{ flex: 1 }}
+            icon={<Ionicons name="exit" size={24} color="#fff" />}
+          />
+        )}
+      </View>
+      
+      {/* Success Overlay */}
+      <Animated.View style={[styles.successOverlay, successAnimatedStyle]} pointerEvents="none">
+        <View style={styles.successContent}>
+          <Ionicons name="checkmark-circle" size={80} color={COLORS.success} />
+          <Text style={styles.successText}>Perfect Exit!</Text>
+          <Text style={styles.successSubtext}>Nothing forgotten today</Text>
+        </View>
+      </Animated.View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  closeBtn: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: 'bold',
+  },
+  headerSubtitle: {
+    fontSize: FONTS.sizes.sm,
+  },
+  voiceBtn: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressContainer: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  progressText: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '500',
+  },
+  progressPercent: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: 'bold',
+  },
+  progressBar: {
+    height: 8,
+    borderRadius: RADIUS.full,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: RADIUS.full,
+  },
+  itemsList: {
+    flex: 1,
+  },
+  itemsContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.lg,
+  },
+  sectionTitle: {
+    fontSize: FONTS.sizes.sm,
+    marginBottom: SPACING.md,
+    textAlign: 'center',
+  },
+  footer: {
+    flexDirection: 'row',
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  successOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successContent: {
+    alignItems: 'center',
+  },
+  successText: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: 'bold',
+    color: COLORS.success,
+    marginTop: SPACING.md,
+  },
+  successSubtext: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
+  },
+});

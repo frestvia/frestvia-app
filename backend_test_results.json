@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-04-03T19:20:30.630218",
+  "base_url": "https://item-shield.preview.emergentagent.com/api",
+  "total_tests": 10,
+  "passed_tests": 10,
+  "overall_success": true,
+  "test_details": [
+    {
+      "test": "Health Check",
+      "success": true,
+      "details": "Status: healthy",
+      "timestamp": "2026-04-03T19:20:29.634085"
+    },
+    {
+      "test": "Guest Login",
+      "success": true,
+      "details": "Guest user created: Guest User",
+      "timestamp": "2026-04-03T19:20:29.721740"
+    },
+    {
+      "test": "User Registration",
+      "success": true,
+      "details": "User registered: test@example.com",
+      "timestamp": "2026-04-03T19:20:30.018669"
+    },
+    {
+      "test": "User Login",
+      "success": true,
+      "details": "User logged in: test@example.com",
+      "timestamp": "2026-04-03T19:20:30.292176"
+    },
+    {
+      "test": "Get User Profile",
+      "success": true,
+      "details": "Profile retrieved: Test User",
+      "timestamp": "2026-04-03T19:20:30.341371"
+    },
+    {
+      "test": "Get Checklists",
+      "success": true,
+      "details": "Retrieved 3 checklists",
+      "timestamp": "2026-04-03T19:20:30.391967"
+    },
+    {
+      "test": "Create Checklist",
+      "success": true,
+      "details": "Checklist created: My Test List",
+      "timestamp": "2026-04-03T19:20:30.440361"
+    },
+    {
+      "test": "Record Exit",
+      "success": true,
+      "details": "Exit recorded: 3c1bb209-e6a7-41ea-8053-c3935b539a6d",
+      "timestamp": "2026-04-03T19:20:30.502290"
+    },
+    {
+      "test": "Get Stats",
+      "success": true,
+      "details": "Stats retrieved with 1 exits",
+      "timestamp": "2026-04-03T19:20:30.569698"
+    },
+    {
+      "test": "Get Exit History",
+      "success": true,
+      "details": "Retrieved 1 exit records",
+      "timestamp": "2026-04-03T19:20:30.630108"
+    }
+  ]
+}
