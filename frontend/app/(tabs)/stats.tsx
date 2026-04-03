@@ -4,25 +4,26 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  useColorScheme,
   RefreshControl,
+  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useStatsStore } from '../../src/store/statsStore';
 import { useAuthStore } from '../../src/store/authStore';
 import { StatCard } from '../../src/components/StatCard';
 import { Button } from '../../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 
 const { width } = Dimensions.get('window');
 
 export default function StatsScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
   
   const { stats, fetchStats, isLoading } = useStatsStore();
   const { user } = useAuthStore();
@@ -43,7 +44,7 @@ export default function StatsScreen() {
     : 1;
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -53,10 +54,10 @@ export default function StatsScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+          <Text style={[styles.title, { color: colors.text }]}>
             Forgetting Insights
           </Text>
-          <Text style={[styles.subtitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Track your progress
           </Text>
         </View>
@@ -120,10 +121,10 @@ export default function StatsScreen() {
         {/* Weekly Chart */}
         <View style={[
           styles.chartCard,
-          { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+          { backgroundColor: colors.card },
           SHADOWS.small,
         ]}>
-          <Text style={[styles.chartTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+          <Text style={[styles.chartTitle, { color: colors.text }]}>
             Last 7 Days
           </Text>
           <View style={styles.chartContainer}>
@@ -135,11 +136,11 @@ export default function StatsScreen() {
               
               return (
                 <View key={day.date} style={styles.barContainer}>
-                  <View style={styles.barWrapper}>
+                  <View style={[styles.barWrapper, { backgroundColor: colors.border }]}>
                     <View style={[styles.bar, styles.barSaved, { height: `${savedHeight}%` }]} />
                     <View style={[styles.bar, styles.barForgotten, { height: `${forgottenHeight}%` }]} />
                   </View>
-                  <Text style={[styles.barLabel, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+                  <Text style={[styles.barLabel, { color: colors.textSecondary }]}>
                     {dayName}
                   </Text>
                 </View>
@@ -149,13 +150,13 @@ export default function StatsScreen() {
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: COLORS.success }]} />
-              <Text style={[styles.legendText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]}>
                 Saved
               </Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: COLORS.error }]} />
-              <Text style={[styles.legendText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]}>
                 Forgotten
               </Text>
             </View>
@@ -166,19 +167,19 @@ export default function StatsScreen() {
         {stats?.most_forgotten_items && stats.most_forgotten_items.length > 0 && (
           <View style={[
             styles.forgottenCard,
-            { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+            { backgroundColor: colors.card },
             SHADOWS.small,
           ]}>
-            <Text style={[styles.chartTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+            <Text style={[styles.chartTitle, { color: colors.text }]}>
               Most Forgotten Items
             </Text>
             {stats.most_forgotten_items.map((item, index) => (
-              <View key={item.name} style={styles.forgottenItem}>
+              <View key={item.name} style={[styles.forgottenItem, { borderBottomColor: colors.border }]}>
                 <View style={styles.forgottenLeft}>
                   <View style={[styles.forgottenRank, { backgroundColor: COLORS.error + '20' }]}>
                     <Text style={styles.forgottenRankText}>#{index + 1}</Text>
                   </View>
-                  <Text style={[styles.forgottenName, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+                  <Text style={[styles.forgottenName, { color: colors.text }]}>
                     {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
                   </Text>
                 </View>
@@ -199,40 +200,83 @@ export default function StatsScreen() {
           icon={<Ionicons name="share-social" size={20} color={COLORS.primary} />}
         />
         
+        {/* Premium Advanced Insights */}
+        {!user?.is_premium && (
+          <TouchableOpacity
+            style={[styles.premiumLockCard, { backgroundColor: colors.card }, SHADOWS.small]}
+            onPress={() => router.push('/paywall')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.premiumLockHeader}>
+              <Ionicons name="lock-closed" size={20} color={COLORS.premium} />
+              <Text style={[styles.premiumLockTitle, { color: colors.text }]}>
+                Advanced Insights
+              </Text>
+              <View style={styles.premiumTag}>
+                <Text style={styles.premiumTagText}>PRO</Text>
+              </View>
+            </View>
+            <View style={styles.premiumLockFeatures}>
+              <View style={styles.premiumLockItem}>
+                <Ionicons name="bar-chart" size={14} color={colors.textSecondary} />
+                <Text style={[styles.premiumLockItemText, { color: colors.textSecondary }]}>
+                  Monthly & yearly trends
+                </Text>
+              </View>
+              <View style={styles.premiumLockItem}>
+                <Ionicons name="bulb" size={14} color={colors.textSecondary} />
+                <Text style={[styles.premiumLockItemText, { color: colors.textSecondary }]}>
+                  Smart forgetting patterns
+                </Text>
+              </View>
+              <View style={styles.premiumLockItem}>
+                <Ionicons name="analytics" size={14} color={colors.textSecondary} />
+                <Text style={[styles.premiumLockItemText, { color: colors.textSecondary }]}>
+                  Location-based insights
+                </Text>
+              </View>
+            </View>
+            <View style={styles.premiumLockCTA}>
+              <Text style={styles.premiumLockCTAText}>Unlock with Premium</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.premium} />
+            </View>
+          </TouchableOpacity>
+        )}
+        
         {/* Period Stats */}
         <View style={styles.periodStats}>
           <View style={[
             styles.periodCard,
-            { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+            { backgroundColor: colors.card },
             SHADOWS.small,
           ]}>
-            <Text style={[styles.periodTitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            <Text style={[styles.periodTitle, { color: colors.textSecondary }]}>
               This Week
             </Text>
             <View style={styles.periodRow}>
-              <Text style={[styles.periodLabel, { color: isDark ? COLORS.textDark : COLORS.text }]}>Saved</Text>
+              <Text style={[styles.periodLabel, { color: colors.text }]}>Saved</Text>
               <Text style={[styles.periodValue, { color: COLORS.success }]}>{stats?.items_saved_week || 0}</Text>
             </View>
             <View style={styles.periodRow}>
-              <Text style={[styles.periodLabel, { color: isDark ? COLORS.textDark : COLORS.text }]}>Forgotten</Text>
+              <Text style={[styles.periodLabel, { color: colors.text }]}>Forgotten</Text>
               <Text style={[styles.periodValue, { color: COLORS.error }]}>{stats?.items_forgotten_week || 0}</Text>
             </View>
           </View>
           <View style={{ width: SPACING.md }} />
           <View style={[
             styles.periodCard,
-            { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+            { backgroundColor: colors.card },
             SHADOWS.small,
           ]}>
-            <Text style={[styles.periodTitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            <Text style={[styles.periodTitle, { color: colors.textSecondary }]}>
               This Month
             </Text>
             <View style={styles.periodRow}>
-              <Text style={[styles.periodLabel, { color: isDark ? COLORS.textDark : COLORS.text }]}>Saved</Text>
+              <Text style={[styles.periodLabel, { color: colors.text }]}>Saved</Text>
               <Text style={[styles.periodValue, { color: COLORS.success }]}>{stats?.items_saved_month || 0}</Text>
             </View>
             <View style={styles.periodRow}>
-              <Text style={[styles.periodLabel, { color: isDark ? COLORS.textDark : COLORS.text }]}>Forgotten</Text>
+              <Text style={[styles.periodLabel, { color: colors.text }]}>Forgotten</Text>
               <Text style={[styles.periodValue, { color: COLORS.error }]}>{stats?.items_forgotten_month || 0}</Text>
             </View>
           </View>
@@ -367,7 +411,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.border,
   },
   forgottenLeft: {
     flexDirection: 'row',
@@ -420,5 +464,60 @@ const styles = StyleSheet.create({
   periodValue: {
     fontSize: FONTS.sizes.sm,
     fontWeight: 'bold',
+  },
+  premiumLockCard: {
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.premium + '30',
+  },
+  premiumLockHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  premiumLockTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
+    flex: 1,
+  },
+  premiumTag: {
+    backgroundColor: COLORS.premium,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+  },
+  premiumTagText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  premiumLockFeatures: {
+    marginBottom: SPACING.sm,
+  },
+  premiumLockItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: SPACING.sm,
+  },
+  premiumLockItemText: {
+    fontSize: FONTS.sizes.sm,
+  },
+  premiumLockCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.premium + '20',
+    gap: 4,
+  },
+  premiumLockCTAText: {
+    color: COLORS.premium,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '600',
   },
 });

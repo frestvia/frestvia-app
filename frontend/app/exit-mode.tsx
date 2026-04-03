@@ -165,10 +165,10 @@ export default function ExitModeScreen() {
           <Ionicons name="close" size={28} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
             Exit Mode
           </Text>
-          <Text style={[styles.headerSubtitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
             {activeChecklist.name}
           </Text>
         </View>
@@ -187,14 +187,14 @@ export default function ExitModeScreen() {
       {/* Progress */}
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
-          <Text style={[styles.progressText, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+          <Text style={[styles.progressText, { color: colors.text }]}>
             {checkedCount} of {totalCount} checked
           </Text>
           <Text style={[styles.progressPercent, { color: COLORS.primary }]}>
             {Math.round(progress)}%
           </Text>
         </View>
-        <View style={[styles.progressBar, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]}>
+        <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
           <View
             style={[
               styles.progressFill,
@@ -213,7 +213,7 @@ export default function ExitModeScreen() {
         contentContainerStyle={styles.itemsContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.sectionTitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Tap each item you have with you
         </Text>
         {activeChecklist.items.map((item) => (
@@ -229,7 +229,7 @@ export default function ExitModeScreen() {
       {/* Footer */}
       <View style={[
         styles.footer,
-        { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+        { backgroundColor: colors.card },
         SHADOWS.medium,
       ]}>
         {isComplete ? (
@@ -363,3 +363,4 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
 });
+;

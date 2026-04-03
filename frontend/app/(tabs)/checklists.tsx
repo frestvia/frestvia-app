@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  useColorScheme,
   TextInput,
   Alert,
   Modal,
@@ -15,15 +14,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useChecklistStore, Checklist, ChecklistItem } from '../../src/store/checklistStore';
+import { useTranslation } from 'react-i18next';
+import { useChecklistStore, Checklist } from '../../src/store/checklistStore';
 import { ChecklistItemRow } from '../../src/components/ChecklistItemRow';
 import { Button } from '../../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 
 export default function ChecklistsScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
   
   const {
     checklists,
@@ -76,26 +76,26 @@ export default function ChecklistsScreen() {
       setShowCreateModal(false);
       setSelectedChecklist(newChecklist);
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     }
   };
   
   const handleDeleteChecklist = () => {
     if (!selectedChecklist) return;
     Alert.alert(
-      'Delete Checklist',
-      `Are you sure you want to delete "${selectedChecklist.name}"?`,
+      t('common.delete'),
+      t('checklists.deleteConfirm', { name: selectedChecklist.name }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteChecklist(selectedChecklist.id);
               setSelectedChecklist(checklists.filter(c => c.id !== selectedChecklist.id)[0] || null);
             } catch (error: any) {
-              Alert.alert('Error', error.message);
+              Alert.alert(t('common.error'), error.message);
             }
           },
         },
@@ -110,25 +110,25 @@ export default function ChecklistsScreen() {
         items: selectedChecklist.items,
       });
       setEditMode(false);
-      Alert.alert('Success', 'Checklist saved!');
+      Alert.alert(t('common.success'), 'Checklist saved!');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     }
   };
   
   const checklistTypes = [
-    { value: 'home', label: 'Home', icon: 'home' },
-    { value: 'travel', label: 'Travel', icon: 'airplane' },
-    { value: 'office', label: 'Office', icon: 'briefcase' },
-    { value: 'custom', label: 'Custom', icon: 'list' },
+    { value: 'home', label: t('checklists.homeExit'), icon: 'home' },
+    { value: 'travel', label: t('checklists.travelHotel'), icon: 'airplane' },
+    { value: 'office', label: t('checklists.officeExit'), icon: 'briefcase' },
+    { value: 'custom', label: t('checklists.custom'), icon: 'list' },
   ];
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-          My Checklists
+        <Text style={[styles.title, { color: colors.text }]}>
+          {t('checklists.title')}
         </Text>
         <View style={styles.headerButtons}>
           {editMode && (
@@ -146,7 +146,7 @@ export default function ChecklistsScreen() {
             <Ionicons
               name={editMode ? 'close' : 'pencil'}
               size={24}
-              color={isDark ? COLORS.textDark : COLORS.text}
+              color={colors.text}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -173,33 +173,29 @@ export default function ChecklistsScreen() {
               {
                 backgroundColor: selectedChecklist?.id === checklist.id
                   ? COLORS.primary
-                  : isDark
-                  ? COLORS.cardDark
-                  : COLORS.card,
+                  : colors.card,
               },
             ]}
             onPress={() => setSelectedChecklist(checklist)}
           >
             <Ionicons
               name={
-                checklist.type === 'home'
-                  ? 'home'
-                  : checklist.type === 'travel'
-                  ? 'airplane'
-                  : checklist.type === 'office'
-                  ? 'briefcase'
+                checklist.type === 'home' ? 'home'
+                  : checklist.type === 'travel' ? 'airplane'
+                  : checklist.type === 'office' ? 'briefcase'
                   : 'list'
               }
               size={18}
-              color={selectedChecklist?.id === checklist.id ? '#fff' : isDark ? COLORS.textDark : COLORS.text}
+              color={selectedChecklist?.id === checklist.id ? '#fff' : colors.text}
             />
             <Text
               style={[
                 styles.tabText,
                 {
-                  color: selectedChecklist?.id === checklist.id ? '#fff' : isDark ? COLORS.textDark : COLORS.text,
+                  color: selectedChecklist?.id === checklist.id ? '#fff' : colors.text,
                 },
               ]}
+              numberOfLines={1}
             >
               {checklist.name}
             </Text>
@@ -211,7 +207,7 @@ export default function ChecklistsScreen() {
       {selectedChecklist ? (
         <ScrollView style={styles.itemsList} showsVerticalScrollIndicator={false}>
           <View style={styles.checklistHeader}>
-            <Text style={[styles.checklistName, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+            <Text style={[styles.checklistName, { color: colors.text }]}>
               {selectedChecklist.name}
             </Text>
             {editMode && (
@@ -220,8 +216,8 @@ export default function ChecklistsScreen() {
               </TouchableOpacity>
             )}
           </View>
-          <Text style={[styles.itemCount, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-            {selectedChecklist.items.length} items
+          <Text style={[styles.itemCount, { color: colors.textSecondary }]}>
+            {t('checklists.items', { count: selectedChecklist.items.length })}
           </Text>
           
           {selectedChecklist.items.map((item) => (
@@ -239,25 +235,26 @@ export default function ChecklistsScreen() {
             <TouchableOpacity
               style={[
                 styles.addItemBtn,
-                { borderColor: isDark ? COLORS.borderDark : COLORS.border },
+                { borderColor: colors.border, backgroundColor: colors.card },
               ]}
               onPress={() => setShowAddModal(true)}
             >
               <Ionicons name="add" size={24} color={COLORS.primary} />
               <Text style={[styles.addItemText, { color: COLORS.primary }]}>
-                Add Item
+                {t('checklists.addItem')}
               </Text>
             </TouchableOpacity>
           )}
+          <View style={{ height: 80 }} />
         </ScrollView>
       ) : (
         <View style={styles.emptyState}>
-          <Ionicons name="list-outline" size={64} color={COLORS.textSecondary} />
-          <Text style={[styles.emptyText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-            No checklists yet
+          <Ionicons name="list-outline" size={64} color={colors.textSecondary} />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            {t('checklists.noChecklists')}
           </Text>
           <Button
-            title="Create Checklist"
+            title={t('checklists.createNew')}
             onPress={() => setShowCreateModal(true)}
             style={{ marginTop: SPACING.md }}
           />
@@ -270,27 +267,29 @@ export default function ChecklistsScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={[styles.modalContent, { backgroundColor: isDark ? COLORS.cardDark : COLORS.card }]}>
-            <Text style={[styles.modalTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-              Add New Item
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('checklists.addItem')}
             </Text>
             <TextInput
               style={[
                 styles.modalInput,
                 {
-                  backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background,
-                  color: isDark ? COLORS.textDark : COLORS.text,
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderWidth: 1,
+                  borderColor: colors.border,
                 },
               ]}
-              placeholder="Item name"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholder={t('checklists.itemName')}
+              placeholderTextColor={colors.textSecondary}
               value={newItemName}
               onChangeText={setNewItemName}
               autoFocus
             />
             <View style={styles.modalButtons}>
               <Button
-                title="Cancel"
+                title={t('common.cancel')}
                 onPress={() => {
                   setShowAddModal(false);
                   setNewItemName('');
@@ -299,7 +298,7 @@ export default function ChecklistsScreen() {
                 style={{ flex: 1, marginRight: SPACING.sm }}
               />
               <Button
-                title="Add"
+                title={t('common.add')}
                 onPress={handleAddItem}
                 style={{ flex: 1 }}
               />
@@ -314,26 +313,28 @@ export default function ChecklistsScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={[styles.modalContent, { backgroundColor: isDark ? COLORS.cardDark : COLORS.card }]}>
-            <Text style={[styles.modalTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-              Create New Checklist
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('checklists.createNew')}
             </Text>
             <TextInput
               style={[
                 styles.modalInput,
                 {
-                  backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background,
-                  color: isDark ? COLORS.textDark : COLORS.text,
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderWidth: 1,
+                  borderColor: colors.border,
                 },
               ]}
-              placeholder="Checklist name"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholder={t('checklists.checklistName')}
+              placeholderTextColor={colors.textSecondary}
               value={newChecklistName}
               onChangeText={setNewChecklistName}
               autoFocus
             />
-            <Text style={[styles.typeLabel, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-              Type
+            <Text style={[styles.typeLabel, { color: colors.text }]}>
+              {t('checklists.type')}
             </Text>
             <View style={styles.typeGrid}>
               {checklistTypes.map((type) => (
@@ -344,9 +345,11 @@ export default function ChecklistsScreen() {
                     {
                       backgroundColor: newChecklistType === type.value
                         ? COLORS.primary
-                        : isDark
-                        ? COLORS.backgroundDark
-                        : COLORS.background,
+                        : colors.background,
+                      borderWidth: 1,
+                      borderColor: newChecklistType === type.value
+                        ? COLORS.primary
+                        : colors.border,
                     },
                   ]}
                   onPress={() => setNewChecklistType(type.value)}
@@ -354,13 +357,13 @@ export default function ChecklistsScreen() {
                   <Ionicons
                     name={type.icon as any}
                     size={20}
-                    color={newChecklistType === type.value ? '#fff' : isDark ? COLORS.textDark : COLORS.text}
+                    color={newChecklistType === type.value ? '#fff' : colors.text}
                   />
                   <Text
                     style={[
                       styles.typeBtnText,
                       {
-                        color: newChecklistType === type.value ? '#fff' : isDark ? COLORS.textDark : COLORS.text,
+                        color: newChecklistType === type.value ? '#fff' : colors.text,
                       },
                     ]}
                   >
@@ -371,7 +374,7 @@ export default function ChecklistsScreen() {
             </View>
             <View style={styles.modalButtons}>
               <Button
-                title="Cancel"
+                title={t('common.cancel')}
                 onPress={() => {
                   setShowCreateModal(false);
                   setNewChecklistName('');
@@ -433,6 +436,7 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     fontWeight: '500',
     marginLeft: SPACING.xs,
+    maxWidth: 100,
   },
   itemsList: {
     flex: 1,
@@ -507,6 +511,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: SPACING.lg,
+    gap: SPACING.sm,
   },
   typeBtn: {
     flexDirection: 'row',
@@ -514,8 +519,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
-    marginRight: SPACING.sm,
-    marginBottom: SPACING.sm,
   },
   typeBtnText: {
     fontSize: FONTS.sizes.sm,

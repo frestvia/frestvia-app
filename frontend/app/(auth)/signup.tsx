@@ -9,19 +9,17 @@ import {
   Platform,
   ScrollView,
   Alert,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/authStore';
 import { Button } from '../../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS } from '../../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../../src/constants/theme';
 
 export default function SignupScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
   const { register } = useAuthStore();
   
   const [name, setName] = useState('');
@@ -59,7 +57,7 @@ export default function SignupScreen() {
   };
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -77,16 +75,16 @@ export default function SignupScreen() {
             <Ionicons
               name="arrow-back"
               size={24}
-              color={isDark ? COLORS.textDark : COLORS.text}
+              color={colors.text}
             />
           </TouchableOpacity>
           
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+            <Text style={[styles.title, { color: colors.text }]}>
               Create Account
             </Text>
-            <Text style={[styles.subtitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Start your journey to never forget
             </Text>
           </View>
@@ -104,8 +102,8 @@ export default function SignupScreen() {
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-                    color: isDark ? COLORS.textDark : COLORS.text,
+                    backgroundColor: colors.card,
+                    color: colors.text,
                   },
                 ]}
                 placeholder="Full Name"
@@ -127,8 +125,8 @@ export default function SignupScreen() {
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-                    color: isDark ? COLORS.textDark : COLORS.text,
+                    backgroundColor: colors.card,
+                    color: colors.text,
                   },
                 ]}
                 placeholder="Email"
@@ -151,8 +149,8 @@ export default function SignupScreen() {
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-                    color: isDark ? COLORS.textDark : COLORS.text,
+                    backgroundColor: colors.card,
+                    color: colors.text,
                   },
                 ]}
                 placeholder="Password"
@@ -184,8 +182,8 @@ export default function SignupScreen() {
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-                    color: isDark ? COLORS.textDark : COLORS.text,
+                    backgroundColor: colors.card,
+                    color: colors.text,
                   },
                 ]}
                 placeholder="Confirm Password"
@@ -207,7 +205,7 @@ export default function SignupScreen() {
           
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
               Already have an account?
             </Text>
             <TouchableOpacity onPress={() => router.back()}>

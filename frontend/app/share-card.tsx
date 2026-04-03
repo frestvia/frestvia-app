@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   TouchableOpacity,
   Alert,
   Share,
@@ -18,12 +17,11 @@ import * as FileSystem from 'expo-file-system';
 import { useAuthStore } from '../src/store/authStore';
 import { useStatsStore } from '../src/store/statsStore';
 import { Button } from '../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
 
 export default function ShareCardScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
   
   const { user } = useAuthStore();
   const { stats } = useStatsStore();
@@ -68,13 +66,13 @@ export default function ShareCardScreen() {
   };
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-          <Ionicons name="close" size={28} color={isDark ? COLORS.textDark : COLORS.text} />
+          <Ionicons name="close" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
           Share Your Stats
         </Text>
         <View style={{ width: 44 }} />
@@ -153,7 +151,7 @@ export default function ShareCardScreen() {
           icon={<Ionicons name="share-social" size={24} color="#fff" />}
         />
         
-        <Text style={[styles.hint, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>
           Share your progress with friends!
         </Text>
       </View>

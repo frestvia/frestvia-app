@@ -129,6 +129,11 @@ export default function HomeScreen() {
             <Text style={[styles.name, { color: colors.text }]}>
               {user?.name || t('auth.guestUser')}
             </Text>
+            {user?.is_premium && (
+              <View style={styles.premiumBadgeHome}>
+                <Text style={styles.premiumBadgeText}>👑 Premium</Text>
+              </View>
+            )}
           </View>
           {stats && stats.current_streak > 0 && (
             <View style={styles.streakBadge}>
@@ -181,7 +186,7 @@ export default function HomeScreen() {
                 {stats.risk_score}%
               </Text>
             </View>
-            <View style={styles.riskBar}>
+            <View style={[styles.riskBar, { backgroundColor: colors.border }]}>
               <View
                 style={[
                   styles.riskFill,
@@ -719,5 +724,18 @@ const styles = StyleSheet.create({
     color: '#6366F1',
     fontSize: FONTS.sizes.md,
     fontWeight: 'bold',
+  },
+  premiumBadgeHome: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  premiumBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#1a1a2e',
   },
 });

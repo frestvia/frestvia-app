@@ -4,18 +4,18 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  useColorScheme,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, isYesterday } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { useStatsStore, ExitRecord } from '../../src/store/statsStore';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 
 export default function HistoryScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
   
   const { exitHistory, fetchExitHistory } = useStatsStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -52,7 +52,7 @@ export default function HistoryScreen() {
   });
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -62,10 +62,10 @@ export default function HistoryScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+          <Text style={[styles.title, { color: colors.text }]}>
             Exit History
           </Text>
-          <Text style={[styles.subtitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Your past check routines
           </Text>
         </View>
@@ -73,17 +73,17 @@ export default function HistoryScreen() {
         {Object.keys(groupedExits).length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="time-outline" size={64} color={COLORS.textSecondary} />
-            <Text style={[styles.emptyText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               No exit history yet
             </Text>
-            <Text style={[styles.emptySubtext, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
               Start using Exit Mode to track your routines
             </Text>
           </View>
         ) : (
           Object.entries(groupedExits).map(([dateKey, exits]) => (
             <View key={dateKey} style={styles.dateGroup}>
-              <Text style={[styles.dateHeader, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+              <Text style={[styles.dateHeader, { color: colors.text }]}>
                 {dateKey}
               </Text>
               
@@ -98,7 +98,7 @@ export default function HistoryScreen() {
                     style={[
                       styles.exitCard,
                       {
-                        backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
+                        backgroundColor: colors.card,
                         borderLeftColor: isPerfect ? COLORS.success : COLORS.error,
                       },
                       SHADOWS.small,
@@ -112,10 +112,10 @@ export default function HistoryScreen() {
                           color={isPerfect ? COLORS.success : COLORS.error}
                         />
                         <View style={styles.exitInfo}>
-                          <Text style={[styles.exitName, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+                          <Text style={[styles.exitName, { color: colors.text }]}>
                             {exit.checklist_name}
                           </Text>
-                          <Text style={[styles.exitTime, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+                          <Text style={[styles.exitTime, { color: colors.textSecondary }]}>
                             {formatTime(exit.created_at)}
                             {exit.location_name && ` • ${exit.location_name}`}
                           </Text>
