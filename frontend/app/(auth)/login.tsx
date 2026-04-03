@@ -9,19 +9,19 @@ import {
   Platform,
   ScrollView,
   Alert,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/store/authStore';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../../src/constants/theme';
 import { Button } from '../../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS } from '../../src/constants/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
   const { login, guestLogin } = useAuthStore();
   
   const [email, setEmail] = useState('');
@@ -31,7 +31,7 @@ export default function LoginScreen() {
   
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), 'Please fill in all fields');
       return;
     }
     
@@ -40,7 +40,7 @@ export default function LoginScreen() {
       await login(email, password);
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setLoading(false);
     }
@@ -52,14 +52,14 @@ export default function LoginScreen() {
       await guestLogin();
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setLoading(false);
     }
   };
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -74,11 +74,11 @@ export default function LoginScreen() {
             <View style={styles.iconContainer}>
               <Ionicons name="checkmark-circle" size={64} color={COLORS.primary} />
             </View>
-            <Text style={[styles.title, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-              Forgotten Item Reminder
+            <Text style={[styles.title, { color: colors.text }]}>
+              {t('app.name')}
             </Text>
-            <Text style={[styles.subtitle, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-              Never forget your essentials again
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              {t('app.tagline')}
             </Text>
           </View>
           
@@ -88,19 +88,19 @@ export default function LoginScreen() {
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color={COLORS.textSecondary}
+                color={colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-                    color: isDark ? COLORS.textDark : COLORS.text,
+                    backgroundColor: colors.card,
+                    color: colors.text,
                   },
                 ]}
-                placeholder="Email"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholder={t('auth.email')}
+                placeholderTextColor={colors.textSecondary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -112,19 +112,19 @@ export default function LoginScreen() {
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color={COLORS.textSecondary}
+                color={colors.textSecondary}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={[
                   styles.input,
                   {
-                    backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-                    color: isDark ? COLORS.textDark : COLORS.text,
+                    backgroundColor: colors.card,
+                    color: colors.text,
                   },
                 ]}
-                placeholder="Password"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholder={t('auth.password')}
+                placeholderTextColor={colors.textSecondary}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -136,13 +136,13 @@ export default function LoginScreen() {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color={COLORS.textSecondary}
+                  color={colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
             
             <Button
-              title="Sign In"
+              title={t('auth.signIn')}
               onPress={handleLogin}
               loading={loading}
               size="large"
@@ -150,15 +150,15 @@ export default function LoginScreen() {
             />
             
             <View style={styles.divider}>
-              <View style={[styles.dividerLine, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]} />
-              <Text style={[styles.dividerText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-                or
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.textSecondary }]}>
+                {t('common.or') || 'or'}
               </Text>
-              <View style={[styles.dividerLine, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]} />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
             
             <Button
-              title="Continue as Guest"
+              title={t('auth.continueAsGuest')}
               onPress={handleGuestLogin}
               variant="outline"
               size="large"
@@ -169,11 +169,11 @@ export default function LoginScreen() {
           
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-              Don't have an account?
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+              {t('auth.dontHaveAccount')}
             </Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-              <Text style={styles.linkText}>Sign Up</Text>
+              <Text style={styles.linkText}>{t('auth.signUp')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

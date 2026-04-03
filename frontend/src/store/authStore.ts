@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { api } from '../services/api';
 
 export interface User {
@@ -30,6 +31,43 @@ interface AuthState {
   updateProfile: (name: string) => Promise<void>;
 }
 
+// Safe storage operations
+const safeSetItem = async (key: string, value: string) => {
+  try {
+    if (Platform.OS === 'web') {
+      localStorage.setItem(key, value);
+    } else {
+      await AsyncStorage.setItem(key, value);
+    }
+  } catch (e) {
+    console.warn('Storage setItem failed:', e);
+  }
+};
+
+const safeGetItem = async (key: string): Promise<string | null> => {
+  try {
+    if (Platform.OS === 'web') {
+      return localStorage.getItem(key);
+    }
+    return await AsyncStorage.getItem(key);
+  } catch (e) {
+    console.warn('Storage getItem failed:', e);
+    return null;
+  }
+};
+
+const safeRemoveItem = async (key: string) => {
+  try {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem(key);
+    } else {
+      await AsyncStorage.removeItem(key);
+    }
+  } catch (e) {
+    console.warn('Storage removeItem failed:', e);
+  }
+};
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
@@ -41,7 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await api.post('/auth/login', { email, password });
       const { access_token, user } = response.data;
       
-      await AsyncStorage.setItem('token', access_token);
+      await safeSetItem('forgetly_token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       set({ user, token: access_token, isAuthenticated: true });
@@ -55,7 +93,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await api.post('/auth/register', { email, password, name });
       const { access_token, user } = response.data;
       
-      await AsyncStorage.setItem('token', access_token);
+      await safeSetItem('forgetly_token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       set({ user, token: access_token, isAuthenticated: true });
@@ -69,7 +107,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await api.post('/auth/guest');
       const { access_token, user } = response.data;
       
-      await AsyncStorage.setItem('token', access_token);
+      await safeSetItem('forgetly_token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       set({ user, token: access_token, isAuthenticated: true });
@@ -79,14 +117,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   
   logout: async () => {
-    await AsyncStorage.removeItem('token');
+    await safeRemoveItem('forgetly_token');
     delete api.defaults.headers.common['Authorization'];
     set({ user: null, token: null, isAuthenticated: false });
   },
   
   loadToken: async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
+      const token = await safeGetItem('forgetly_token');
       if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         const response = await api.get('/auth/me');
@@ -95,7 +133,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isLoading: false });
       }
     } catch (error) {
-      await AsyncStorage.removeItem('token');
+      await safeRemoveItem('forgetly_token');
       set({ isLoading: false });
     }
   },

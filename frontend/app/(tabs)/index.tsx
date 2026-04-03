@@ -5,13 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  useColorScheme,
   RefreshControl,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -23,13 +23,13 @@ import Animated, {
 import { useAuthStore } from '../../src/store/authStore';
 import { useChecklistStore, Checklist } from '../../src/store/checklistStore';
 import { useStatsStore } from '../../src/store/statsStore';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 import { StatCard } from '../../src/components/StatCard';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
   
   const { user } = useAuthStore();
   const { checklists, fetchChecklists, setActiveChecklist } = useChecklistStore();
@@ -45,7 +45,6 @@ export default function HomeScreen() {
     fetchChecklists();
     fetchStats();
     
-    // Pulse animation
     pulseOpacity.value = withRepeat(
       withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       -1,
@@ -67,7 +66,7 @@ export default function HomeScreen() {
   
   const handleExitMode = () => {
     if (!selectedChecklist) {
-      Alert.alert('No Checklist', 'Please create a checklist first');
+      Alert.alert(t('common.error'), 'Please create a checklist first');
       return;
     }
     setActiveChecklist(selectedChecklist);
@@ -90,8 +89,17 @@ export default function HomeScreen() {
     buttonScale.value = withSpring(1);
   };
   
+  const getChecklistIcon = (type: string) => {
+    switch (type) {
+      case 'home': return 'home';
+      case 'travel': return 'airplane';
+      case 'office': return 'briefcase';
+      default: return 'list';
+    }
+  };
+  
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -102,11 +110,11 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-              Welcome back,
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+              {t('auth.welcomeBack')}
             </Text>
-            <Text style={[styles.name, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-              {user?.name || 'Guest'}
+            <Text style={[styles.name, { color: colors.text }]}>
+              {user?.name || t('auth.guestUser')}
             </Text>
           </View>
           {stats && stats.current_streak > 0 && (
@@ -120,19 +128,19 @@ export default function HomeScreen() {
         {/* Stats Cards */}
         <View style={styles.statsRow}>
           <StatCard
-            title="Items Saved"
+            title={t('home.itemsSaved')}
             value={stats?.items_saved_today || 0}
             icon="checkmark-circle"
             color={COLORS.success}
-            subtitle="Today"
+            subtitle={t('common.today')}
           />
           <View style={{ width: SPACING.md }} />
           <StatCard
-            title="Forgotten"
+            title={t('home.forgotten')}
             value={stats?.items_forgotten_today || 0}
             icon="alert-circle"
             color={COLORS.error}
-            subtitle="Today"
+            subtitle={t('common.today')}
           />
         </View>
         
@@ -140,14 +148,12 @@ export default function HomeScreen() {
         {stats && (
           <View style={[
             styles.riskCard,
-            {
-              backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-            },
+            { backgroundColor: colors.card },
             SHADOWS.small,
           ]}>
             <View style={styles.riskHeader}>
-              <Text style={[styles.riskTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-                Risk Score
+              <Text style={[styles.riskTitle, { color: colors.text }]}>
+                {t('home.riskScore')}
               </Text>
               <Text style={[
                 styles.riskValue,
@@ -177,19 +183,19 @@ export default function HomeScreen() {
                 ]}
               />
             </View>
-            <Text style={[styles.riskMessage, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
+            <Text style={[styles.riskMessage, { color: colors.textSecondary }]}>
               {stats.risk_score > 60
-                ? "High chance of forgetting - check carefully!"
+                ? t('home.highRisk')
                 : stats.risk_score > 30
-                ? "Moderate risk - stay focused!"
-                : "Looking good - keep it up!"}
+                ? t('home.moderateRisk')
+                : t('home.lowRisk')}
             </Text>
           </View>
         )}
         
         {/* Checklist Selector */}
-        <Text style={[styles.sectionTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-          Select Checklist
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          {t('home.selectChecklist')}
         </Text>
         <ScrollView
           horizontal
@@ -205,40 +211,24 @@ export default function HomeScreen() {
                 {
                   backgroundColor: selectedChecklist?.id === checklist.id
                     ? COLORS.primary
-                    : isDark
-                    ? COLORS.cardDark
-                    : COLORS.card,
+                    : colors.card,
                   borderColor: selectedChecklist?.id === checklist.id
                     ? COLORS.primary
-                    : isDark
-                    ? COLORS.borderDark
-                    : COLORS.border,
+                    : colors.border,
                 },
               ]}
               onPress={() => setSelectedChecklist(checklist)}
             >
               <Ionicons
-                name={
-                  checklist.type === 'home'
-                    ? 'home'
-                    : checklist.type === 'travel'
-                    ? 'airplane'
-                    : checklist.type === 'office'
-                    ? 'briefcase'
-                    : 'list'
-                }
+                name={getChecklistIcon(checklist.type) as any}
                 size={16}
-                color={selectedChecklist?.id === checklist.id ? '#fff' : isDark ? COLORS.textDark : COLORS.text}
+                color={selectedChecklist?.id === checklist.id ? '#fff' : colors.text}
               />
               <Text
                 style={[
                   styles.checklistChipText,
                   {
-                    color: selectedChecklist?.id === checklist.id
-                      ? '#fff'
-                      : isDark
-                      ? COLORS.textDark
-                      : COLORS.text,
+                    color: selectedChecklist?.id === checklist.id ? '#fff' : colors.text,
                   },
                 ]}
               >
@@ -252,19 +242,17 @@ export default function HomeScreen() {
         {selectedChecklist && (
           <View style={[
             styles.previewCard,
-            {
-              backgroundColor: isDark ? COLORS.cardDark : COLORS.card,
-            },
+            { backgroundColor: colors.card },
             SHADOWS.small,
           ]}>
-            <Text style={[styles.previewTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+            <Text style={[styles.previewTitle, { color: colors.text }]}>
               {selectedChecklist.name}
             </Text>
-            <Text style={[styles.previewItems, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-              {selectedChecklist.items.map(i => i.name).join(' • ')}
+            <Text style={[styles.previewItems, { color: colors.textSecondary }]}>
+              {selectedChecklist.items.map(i => i.name).join(' \u2022 ')}
             </Text>
             <Text style={[styles.previewCount, { color: COLORS.primary }]}>
-              {selectedChecklist.items.length} items to check
+              {t('home.itemsToCheck', { count: selectedChecklist.items.length })}
             </Text>
           </View>
         )}
@@ -281,8 +269,8 @@ export default function HomeScreen() {
               activeOpacity={1}
             >
               <Ionicons name="exit" size={40} color="#fff" />
-              <Text style={styles.exitButtonText}>I'M LEAVING</Text>
-              <Text style={styles.exitButtonSubtext}>Tap to check items</Text>
+              <Text style={styles.exitButtonText}>{t('home.imLeaving')}</Text>
+              <Text style={styles.exitButtonSubtext}>{t('home.tapToCheck')}</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>

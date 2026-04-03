@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  useColorScheme,
   TouchableOpacity,
   Alert,
   TextInput,
@@ -15,15 +14,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/store/authStore';
 import { useStatsStore } from '../../src/store/statsStore';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 import { Button } from '../../src/components/Button';
-import { COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
+  const { isDark, colors } = useTheme();
   
   const { user, logout, updateProfile } = useAuthStore();
   const { stats } = useStatsStore();
@@ -34,12 +34,12 @@ export default function ProfileScreen() {
   
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('auth.logout'),
+      t('auth.logoutConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Logout',
+          text: t('auth.logout'),
           style: 'destructive',
           onPress: async () => {
             await logout();
@@ -56,16 +56,16 @@ export default function ProfileScreen() {
     try {
       await updateProfile(editName.trim());
       setShowEditModal(false);
-      Alert.alert('Success', 'Profile updated!');
+      Alert.alert(t('common.success'), t('profile.profileUpdated'));
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setLoading(false);
     }
   };
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
@@ -87,16 +87,16 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             )}
           </View>
-          <Text style={[styles.name, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-            {user?.name || 'Guest User'}
+          <Text style={[styles.name, { color: colors.text }]}>
+            {user?.name || t('auth.guestUser')}
           </Text>
-          <Text style={[styles.email, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-            {user?.is_guest ? 'Guest Account' : user?.email}
+          <Text style={[styles.email, { color: colors.textSecondary }]}>
+            {user?.is_guest ? t('auth.guestAccount') : user?.email}
           </Text>
           {user?.is_guest && (
             <View style={styles.guestBadge}>
               <Ionicons name="person-outline" size={14} color={COLORS.warning} />
-              <Text style={styles.guestText}>Limited Features</Text>
+              <Text style={styles.guestText}>{t('auth.limitedFeatures')}</Text>
             </View>
           )}
         </View>
@@ -104,33 +104,33 @@ export default function ProfileScreen() {
         {/* Stats Summary */}
         <View style={[
           styles.statsCard,
-          { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+          { backgroundColor: colors.card },
           SHADOWS.small,
         ]}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: isDark ? COLORS.textDark : COLORS.text }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
               {stats?.total_exits || 0}
             </Text>
-            <Text style={[styles.statLabel, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-              Total Exits
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              {t('stats.totalExits')}
             </Text>
           </View>
-          <View style={[styles.statDivider, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]} />
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: COLORS.success }]}>
               {stats?.total_items_checked || 0}
             </Text>
-            <Text style={[styles.statLabel, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-              Items Saved
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              {t('stats.itemsChecked')}
             </Text>
           </View>
-          <View style={[styles.statDivider, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]} />
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: COLORS.streak }]}>
               {stats?.current_streak || 0}
             </Text>
-            <Text style={[styles.statLabel, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-              Day Streak
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              {t('stats.dayStreak')}
             </Text>
           </View>
         </View>
@@ -145,9 +145,9 @@ export default function ProfileScreen() {
             <View style={styles.premiumContent}>
               <Ionicons name="diamond" size={32} color="#fff" />
               <View style={styles.premiumText}>
-                <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+                <Text style={styles.premiumTitle}>{t('premium.title')}</Text>
                 <Text style={styles.premiumSubtitle}>
-                  Unlimited locations, advanced insights & more
+                  {t('premium.subtitle')}
                 </Text>
               </View>
             </View>
@@ -158,7 +158,7 @@ export default function ProfileScreen() {
         {/* Menu Options */}
         <View style={[
           styles.menuCard,
-          { backgroundColor: isDark ? COLORS.cardDark : COLORS.card },
+          { backgroundColor: colors.card },
           SHADOWS.small,
         ]}>
           <TouchableOpacity
@@ -169,45 +169,48 @@ export default function ProfileScreen() {
               <View style={[styles.menuIcon, { backgroundColor: COLORS.primary + '20' }]}>
                 <Ionicons name="share-social" size={20} color={COLORS.primary} />
               </View>
-              <Text style={[styles.menuText, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-                Share My Stats
+              <Text style={[styles.menuText, { color: colors.text }]}>
+                {t('profile.shareMyStats')}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           
-          <View style={[styles.menuDivider, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]} />
+          <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/settings')}
+          >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.success + '20' }]}>
-                <Ionicons name="notifications" size={20} color={COLORS.success} />
+                <Ionicons name="settings" size={20} color={COLORS.success} />
               </View>
-              <Text style={[styles.menuText, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-                Notifications
+              <Text style={[styles.menuText, { color: colors.text }]}>
+                {t('profile.settings')}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           
-          <View style={[styles.menuDivider, { backgroundColor: isDark ? COLORS.borderDark : COLORS.border }]} />
+          <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.warning + '20' }]}>
                 <Ionicons name="help-circle" size={20} color={COLORS.warning} />
               </View>
-              <Text style={[styles.menuText, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-                Help & Support
+              <Text style={[styles.menuText, { color: colors.text }]}>
+                {t('profile.helpSupport')}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
         
         {/* Logout Button */}
         <Button
-          title="Logout"
+          title={t('auth.logout')}
           onPress={handleLogout}
           variant="danger"
           style={styles.logoutBtn}
@@ -215,8 +218,8 @@ export default function ProfileScreen() {
         />
         
         {/* Version */}
-        <Text style={[styles.version, { color: isDark ? COLORS.textSecondaryDark : COLORS.textSecondary }]}>
-          Version 1.0.0
+        <Text style={[styles.version, { color: colors.textSecondary }]}>
+          {t('app.name')} - {t('profile.version')} 1.0.0
         </Text>
       </ScrollView>
       
@@ -226,33 +229,33 @@ export default function ProfileScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={[styles.modalContent, { backgroundColor: isDark ? COLORS.cardDark : COLORS.card }]}>
-            <Text style={[styles.modalTitle, { color: isDark ? COLORS.textDark : COLORS.text }]}>
-              Edit Profile
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('profile.editProfile')}
             </Text>
             <TextInput
               style={[
                 styles.modalInput,
                 {
-                  backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background,
-                  color: isDark ? COLORS.textDark : COLORS.text,
+                  backgroundColor: colors.background,
+                  color: colors.text,
                 },
               ]}
-              placeholder="Your name"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholder={t('profile.yourName')}
+              placeholderTextColor={colors.textSecondary}
               value={editName}
               onChangeText={setEditName}
               autoFocus
             />
             <View style={styles.modalButtons}>
               <Button
-                title="Cancel"
+                title={t('common.cancel')}
                 onPress={() => setShowEditModal(false)}
                 variant="outline"
                 style={{ flex: 1, marginRight: SPACING.sm }}
               />
               <Button
-                title="Save"
+                title={t('common.save')}
                 onPress={handleUpdateProfile}
                 loading={loading}
                 style={{ flex: 1 }}

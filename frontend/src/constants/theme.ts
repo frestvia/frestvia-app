@@ -1,5 +1,8 @@
+import { useColorScheme } from 'react-native';
+import { useSettingsStore } from '../store/settingsStore';
+
 export const COLORS = {
-  // Primary
+  // Primary Brand Colors
   primary: '#6366F1',
   primaryDark: '#4F46E5',
   primaryLight: '#818CF8',
@@ -16,17 +19,23 @@ export const COLORS = {
   error: '#EF4444',
   errorLight: '#FEE2E2',
   
-  // Neutral
-  background: '#F8FAFC',
-  backgroundDark: '#0F172A',
-  card: '#FFFFFF',
-  cardDark: '#1E293B',
-  text: '#1E293B',
-  textDark: '#F8FAFC',
-  textSecondary: '#64748B',
-  textSecondaryDark: '#94A3B8',
-  border: '#E2E8F0',
-  borderDark: '#334155',
+  // Light Theme
+  light: {
+    background: '#F8FAFC',
+    card: '#FFFFFF',
+    text: '#1E293B',
+    textSecondary: '#64748B',
+    border: '#E2E8F0',
+  },
+  
+  // Dark Theme
+  dark: {
+    background: '#0F172A',
+    card: '#1E293B',
+    text: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    border: '#334155',
+  },
   
   // Special
   streak: '#FFD700',
@@ -87,4 +96,34 @@ export const RADIUS = {
   lg: 16,
   xl: 24,
   full: 9999,
+};
+
+// Custom hook to get theme colors based on settings
+export const useTheme = () => {
+  const systemColorScheme = useColorScheme();
+  const { theme } = useSettingsStore();
+  
+  const isDark = theme === 'dark' || (theme === 'system' && systemColorScheme === 'dark');
+  
+  return {
+    isDark,
+    colors: {
+      primary: COLORS.primary,
+      primaryDark: COLORS.primaryDark,
+      primaryLight: COLORS.primaryLight,
+      success: COLORS.success,
+      successLight: COLORS.successLight,
+      warning: COLORS.warning,
+      warningLight: COLORS.warningLight,
+      error: COLORS.error,
+      errorLight: COLORS.errorLight,
+      streak: COLORS.streak,
+      premium: COLORS.premium,
+      background: isDark ? COLORS.dark.background : COLORS.light.background,
+      card: isDark ? COLORS.dark.card : COLORS.light.card,
+      text: isDark ? COLORS.dark.text : COLORS.light.text,
+      textSecondary: isDark ? COLORS.dark.textSecondary : COLORS.light.textSecondary,
+      border: isDark ? COLORS.dark.border : COLORS.light.border,
+    },
+  };
 };

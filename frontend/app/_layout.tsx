@@ -1,22 +1,36 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme, View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, I18nManager } from 'react-native';
 import { useAuthStore } from '../src/store/authStore';
-import { COLORS } from '../src/constants/theme';
+import { useSettingsStore } from '../src/store/settingsStore';
+import { useTheme, COLORS } from '../src/constants/theme';
+import '../src/i18n';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const { loadToken, isLoading } = useAuthStore();
+  const { isDark, colors } = useTheme();
+  const { loadToken, isLoading: authLoading } = useAuthStore();
+  const { loadSettings, isLoading: settingsLoading, isRTL } = useSettingsStore();
   
   useEffect(() => {
-    loadToken();
+    const init = async () => {
+      await loadSettings();
+      await loadToken();
+    };
+    init();
   }, []);
   
-  if (isLoading) {
+  // Handle RTL layout
+  useEffect(() => {
+    if (I18nManager.isRTL !== isRTL) {
+      I18nManager.allowRTL(isRTL);
+      I18nManager.forceRTL(isRTL);
+    }
+  }, [isRTL]);
+  
+  if (authLoading || settingsLoading) {
     return (
-      <View style={[styles.loading, { backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background }]}>
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
@@ -29,7 +43,7 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: {
-            backgroundColor: isDark ? COLORS.backgroundDark : COLORS.background,
+            backgroundColor: colors.background,
           },
         }}
       >
@@ -55,6 +69,13 @@ export default function RootLayout() {
           options={{
             presentation: 'modal',
             animation: 'slide_from_bottom',
+          }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
           }}
         />
       </Stack>
