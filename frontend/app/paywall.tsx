@@ -157,7 +157,7 @@ export default function PaywallScreen() {
               Premium Activated!
             </Text>
             <Text style={[styles.successSubtitle, { color: colors.textSecondary }]}>
-              All features are now unlocked. Enjoy Frestivia Premium!
+              All features are now unlocked. Enjoy Frestvia Premium!
             </Text>
           </Animated.View>
         </View>

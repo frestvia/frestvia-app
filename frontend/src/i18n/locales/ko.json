@@ -1,5 +1,5 @@
 {
-  "app": { "name": "Frestivia", "tagline": "다시는 아무것도 잊지 마세요", "fullName": "Frestivia – 스마트 체크리스트" },
+  "app": { "name": "Frestvia", "tagline": "다시는 아무것도 잊지 마세요", "fullName": "Frestvia – 스마트 체크리스트" },
   "common": { "save": "저장", "cancel": "취소", "delete": "삭제", "edit": "편집", "add": "추가", "close": "닫기", "back": "뒤로", "next": "다음", "done": "완료", "yes": "예", "no": "아니요", "ok": "확인", "or": "또는", "error": "오류", "success": "성공", "loading": "로딩 중...", "today": "오늘", "yesterday": "어제", "thisWeek": "이번 주", "thisMonth": "이번 달" },
   "auth": { "signIn": "로그인", "signUp": "가입하기", "logout": "로그아웃", "email": "이메일", "password": "비밀번호", "confirmPassword": "비밀번호 확인", "fullName": "전체 이름", "createAccount": "계정 만들기", "continueAsGuest": "게스트로 계속", "dontHaveAccount": "계정이 없으신가요?", "alreadyHaveAccount": "이미 계정이 있으신가요?", "welcomeBack": "다시 오셨군요,", "guestUser": "게스트", "guestAccount": "게스트 계정", "limitedFeatures": "제한된 기능", "startJourney": "여정을 시작하세요", "logoutConfirm": "로그아웃 하시겠습니까?" },
   "home": { "selectChecklist": "체크리스트 선택", "itemsToCheck": "{{count}}개 확인 필요", "imLeaving": "나갑니다", "tapToCheck": "탭하여 확인", "itemsSaved": "세이프", "forgotten": "깜빡!", "riskScore": "위험 점수", "highRisk": "위험 높음 - 꼼꼼히 확인!", "moderateRisk": "위험 보통 - 주의하세요!", "lowRisk": "좋아요 - 계속 이렇게!", "nearLocation": "근처에 있습니다", "suggestedChecklist": "추천 체크리스트", "myLocations": "내 장소" },

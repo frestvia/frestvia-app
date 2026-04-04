@@ -22,7 +22,7 @@ import Constants from 'expo-constants';
 const API_URL = Constants.expoConfig?.extra?.EXPO_BACKEND_URL ||
   process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
-const CHAT_STORAGE_KEY = '@frestivia_support_chat';
+const CHAT_STORAGE_KEY = '@frestvia_support_chat';
 
 interface Message {
   id: string;
@@ -104,7 +104,7 @@ export default function SupportChatScreen() {
         // Show welcome message
         const welcome: Message = {
           id: 'welcome',
-          text: 'Hi there! I\'m Frestivia\'s AI assistant. How can I help you today? You can ask me about checklists, premium features, reminders, shared lists, or anything else!',
+          text: 'Hi there! I\'m Frestvia\'s AI assistant. How can I help you today? You can ask me about checklists, premium features, reminders, shared lists, or anything else!',
           isUser: false,
           timestamp: Date.now(),
           status: 'sent',
