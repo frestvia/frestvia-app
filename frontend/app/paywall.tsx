@@ -346,11 +346,10 @@ export default function PaywallScreen() {
         </TouchableOpacity>
       </ScrollView>
       
-      {/* Footer */}
+      {/* Footer - NOT absolute, flex sibling */}
       <View style={[
         styles.footer,
-        { backgroundColor: colors.card },
-        SHADOWS.medium,
+        { backgroundColor: colors.card, borderTopColor: colors.border },
       ]}>
         <TouchableOpacity
           style={[styles.purchaseBtn, loading && { opacity: 0.7 }]}
@@ -409,7 +408,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: 120,
+    paddingBottom: SPACING.lg,
   },
   hero: {
     alignItems: 'center',
@@ -545,12 +544,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
+    borderTopWidth: 1,
   },
   purchaseBtn: {
     borderRadius: 16,
