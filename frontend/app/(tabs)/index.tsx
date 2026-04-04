@@ -303,12 +303,7 @@ export default function HomeScreen() {
           <Animated.View style={[styles.outerGlow, outerGlowStyle]} />
           
           {/* Pulse ring */}
-          <Animated.View style={[styles.pulseRing, pulseRingStyle]}>
-            <LinearGradient
-              colors={['rgba(99, 102, 241, 0.3)', 'rgba(139, 92, 246, 0.1)']}
-              style={styles.pulseGradient}
-            />
-          </Animated.View>
+          <Animated.View style={[styles.pulseRing, pulseRingStyle]} />
           
           {/* Main Button */}
           <Animated.View style={buttonAnimatedStyle}>
@@ -607,24 +602,22 @@ const styles = StyleSheet.create({
     width: PULSE_SIZE,
     height: PULSE_SIZE,
     borderRadius: PULSE_SIZE / 2,
-    overflow: 'hidden',
-  },
-  pulseGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: PULSE_SIZE / 2,
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
   },
   ctaButtonOuter: {
+    borderRadius: BUTTON_SIZE / 2,
     shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
     elevation: 12,
   },
   ctaButton: {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
+    aspectRatio: 1,
     borderRadius: BUTTON_SIZE / 2,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
