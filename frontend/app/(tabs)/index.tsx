@@ -52,7 +52,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { isDark, colors } = useTheme();
   
-  const { user } = useAuthStore();
+  const { user, isPremiumUser } = useAuthStore();
   const { checklists, fetchChecklists, setActiveChecklist } = useChecklistStore();
   const { stats, fetchStats } = useStatsStore();
   const { locations, fetchLocations, nearbyLocation } = useLocationStore();
@@ -62,6 +62,8 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
+  
+  const isPremium = isPremiumUser();
   
   const buttonScale = useSharedValue(1);
   const pulseScale = useSharedValue(1);
@@ -338,7 +340,7 @@ export default function HomeScreen() {
             borderWidth: isDark ? 1 : 0,
           }, !isDark && SHADOWS.small]}
           onPress={() => {
-            if (!user?.is_premium && user?.is_guest) {
+            if (!isPremium) {
               router.push('/paywall');
             } else {
               router.push('/shared-lists');
@@ -354,7 +356,7 @@ export default function HomeScreen() {
               <Text style={[styles.sharedListTitle, { color: colors.text }]}>
                 Shared Lists
               </Text>
-              {!user?.is_premium && (
+              {!isPremium && (
                 <View style={styles.proBadge}>
                   <Text style={styles.proBadgeText}>PRO</Text>
                 </View>
@@ -390,7 +392,7 @@ export default function HomeScreen() {
               <Text style={[styles.sharedListTitle, { color: colors.text }]}>
                 {t('home.myLocations')}
               </Text>
-              {!user?.is_premium && (
+              {!isPremium && (
                 <Text style={[styles.limitText, { color: colors.textSecondary }]}>
                   {locations.length}/2 free
                 </Text>
@@ -427,7 +429,7 @@ export default function HomeScreen() {
         )}
 
         {/* Premium Promo Card */}
-        {(!user?.is_premium || user?.is_guest) && !promoDismissed && (
+        {!isPremium && !promoDismissed && (
           <View style={[styles.promoCard, isDark && { borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)' }]}>
             <LinearGradient
               colors={isDark ? ['rgba(99, 102, 241, 0.2)', 'rgba(139, 92, 246, 0.15)'] : ['#6366F1', '#8B5CF6', '#A855F7']}

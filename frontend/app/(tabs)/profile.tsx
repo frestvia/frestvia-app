@@ -25,8 +25,10 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const { isDark, colors } = useTheme();
   
-  const { user, logout, updateProfile } = useAuthStore();
+  const { user, logout, updateProfile, isPremiumUser } = useAuthStore();
   const { stats } = useStatsStore();
+  
+  const isPremium = isPremiumUser();
   
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
@@ -136,7 +138,7 @@ export default function ProfileScreen() {
         </View>
         
         {/* Premium Card */}
-        {user?.is_premium && !user?.is_guest ? (
+        {isPremium ? (
           <View style={[styles.premiumActiveCard, SHADOWS.medium]}>
             <View style={styles.premiumContent}>
               <Ionicons name="diamond" size={32} color="#fff" />

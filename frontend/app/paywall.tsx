@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,53 +6,207 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withSequence,
+  withTiming,
+  withDelay,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
 import { useAuthStore } from '../src/store/authStore';
-import { api } from '../src/services/api';
-import { Button } from '../src/components/Button';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function PaywallScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isDark, colors } = useTheme();
-  const { refreshUser } = useAuthStore();
+  const { user, activatePremium, isPremiumUser } = useAuthStore();
   
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [loading, setLoading] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  
+  const isAlreadyPremium = isPremiumUser();
+  
+  // Animation values
+  const successScale = useSharedValue(0);
+  const successOpacity = useSharedValue(0);
+  const checkScale = useSharedValue(0);
   
   const features = [
-    { icon: 'location', text: t('premium.unlimitedLocations') },
-    { icon: 'analytics', text: t('premium.advancedInsights') },
-    { icon: 'navigate', text: t('premium.backgroundGeofencing') },
-    { icon: 'list', text: t('premium.unlimitedChecklists') },
-    { icon: 'bulb', text: t('premium.smartSuggestions') },
-    { icon: 'cloud', text: t('premium.cloudSync') },
-    { icon: 'flame', text: t('premium.streakRewards') },
-    { icon: 'mic', text: t('premium.customVoice') },
+    { icon: 'location', text: 'Unlimited saved locations', color: '#8B5CF6' },
+    { icon: 'analytics', text: 'Advanced insights & analytics', color: '#6366F1' },
+    { icon: 'navigate', text: 'Background geofencing', color: '#7C3AED' },
+    { icon: 'list', text: 'Unlimited checklists', color: '#6366F1' },
+    { icon: 'bulb', text: 'Smart suggestions', color: '#8B5CF6' },
+    { icon: 'people', text: 'Shared premium tools', color: '#7C3AED' },
+    { icon: 'stats-chart', text: 'Premium stats & trends', color: '#6366F1' },
+    { icon: 'mic', text: 'Custom voice alerts', color: '#8B5CF6' },
   ];
   
   const handlePurchase = async () => {
+    if (isAlreadyPremium) {
+      router.back();
+      return;
+    }
+    
+    if (user?.is_guest) {
+      Alert.alert(
+        'Account Required',
+        'Please create an account to purchase premium. Guest accounts cannot make purchases.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign Up', onPress: () => router.replace('/(auth)/signup') },
+        ]
+      );
+      return;
+    }
+    
     setLoading(true);
     try {
-      // For testing - activate premium via API
-      await api.post('/premium/activate');
-      await refreshUser();
-      Alert.alert(
-        '🎉 ' + t('common.success'),
-        'Premium activated! Enjoy all features.',
-        [{ text: t('common.ok'), onPress: () => router.back() }]
-      );
+      console.log('[Paywall] Starting purchase...');
+      
+      // Activate premium through the store (handles backend + local + state)
+      await activatePremium();
+      
+      console.log('[Paywall] Purchase success! Showing animation...');
+      
+      // Show success animation
+      setPurchaseSuccess(true);
+      successOpacity.value = withTiming(1, { duration: 300 });
+      successScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+      checkScale.value = withDelay(300, withSpring(1, { damping: 10, stiffness: 150 }));
+      
+      // Auto-close after showing success
+      setTimeout(() => {
+        router.back();
+      }, 2500);
+      
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.message || 'Failed to activate premium');
+      console.error('[Paywall] Purchase failed:', error);
+      Alert.alert(
+        'Purchase Failed',
+        error.message || 'Something went wrong. Please try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setLoading(false);
     }
   };
+  
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      console.log('[Paywall] Restoring purchases...');
+      
+      // In a real app, this would check App Store/Play Store receipts
+      // For now, check backend status
+      await activatePremium();
+      
+      setPurchaseSuccess(true);
+      successOpacity.value = withTiming(1, { duration: 300 });
+      successScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+      checkScale.value = withDelay(300, withSpring(1, { damping: 10, stiffness: 150 }));
+      
+      setTimeout(() => {
+        router.back();
+      }, 2500);
+      
+    } catch (error: any) {
+      Alert.alert('Restore Failed', 'No active subscription found.');
+    } finally {
+      setRestoring(false);
+    }
+  };
+  
+  const successAnimStyle = useAnimatedStyle(() => ({
+    opacity: successOpacity.value,
+    transform: [{ scale: successScale.value }],
+  }));
+  
+  const checkAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkScale.value }],
+  }));
+  
+  // Success overlay
+  if (purchaseSuccess) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.successOverlay}>
+          <Animated.View style={[styles.successContent, successAnimStyle]}>
+            <Animated.View style={[styles.successCheckWrap, checkAnimStyle]}>
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                style={styles.successCheckCircle}
+              >
+                <Ionicons name="checkmark" size={48} color="#fff" />
+              </LinearGradient>
+            </Animated.View>
+            <Text style={[styles.successTitle, { color: colors.text }]}>
+              Premium Activated!
+            </Text>
+            <Text style={[styles.successSubtitle, { color: colors.textSecondary }]}>
+              All features are now unlocked. Enjoy Forgetly Premium!
+            </Text>
+          </Animated.View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
+  // Already premium state
+  if (isAlreadyPremium) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+            <Ionicons name="close" size={28} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.alreadyPremiumWrap}>
+          <LinearGradient
+            colors={['#10B981', '#059669']}
+            style={styles.premiumActiveCircle}
+          >
+            <Ionicons name="diamond" size={48} color="#fff" />
+          </LinearGradient>
+          <Text style={[styles.alreadyPremiumTitle, { color: colors.text }]}>
+            You are Premium!
+          </Text>
+          <Text style={[styles.alreadyPremiumSub, { color: colors.textSecondary }]}>
+            All features are unlocked. Thank you for your support!
+          </Text>
+          <View style={[styles.activeFeaturesCard, { backgroundColor: colors.card }]}>
+            {features.slice(0, 4).map((f, i) => (
+              <View key={i} style={styles.activeFeatureRow}>
+                <Ionicons name={f.icon as any} size={18} color={COLORS.success} />
+                <Text style={[styles.activeFeatureText, { color: colors.text }]}>{f.text}</Text>
+                <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+              </View>
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.backHomeBtn}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.backHomeBtnText}>Back to App</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -73,10 +227,10 @@ export default function PaywallScreen() {
             <Ionicons name="diamond" size={48} color="#fff" />
           </View>
           <Text style={[styles.heroTitle, { color: colors.text }]}>
-            {t('premium.title')}
+            Upgrade to Premium
           </Text>
           <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
-            {t('premium.subtitle')}
+            Never forget anything, anywhere
           </Text>
         </View>
         
@@ -95,8 +249,8 @@ export default function PaywallScreen() {
                 { borderBottomColor: colors.border },
               ]}
             >
-              <View style={[styles.featureIcon, { backgroundColor: COLORS.premium + '20' }]}>
-                <Ionicons name={feature.icon as any} size={20} color={COLORS.premium} />
+              <View style={[styles.featureIcon, { backgroundColor: feature.color + '20' }]}>
+                <Ionicons name={feature.icon as any} size={20} color={feature.color} />
               </View>
               <Text style={[styles.featureText, { color: colors.text }]}>
                 {feature.text}
@@ -105,85 +259,91 @@ export default function PaywallScreen() {
             </View>
           ))}
         </View>
-        
-        {/* Pricing */}
-        <Text style={[styles.pricingTitle, { color: colors.text }]}>
-          {t('premium.choosePlan')}
-        </Text>
-        
-        <View style={styles.plans}>
-          {/* Monthly */}
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              { backgroundColor: colors.card },
-              selectedPlan === 'monthly' && styles.planCardSelected,
-              SHADOWS.small,
-            ]}
-            onPress={() => setSelectedPlan('monthly')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.planHeader}>
-              <Text style={[styles.planName, { color: colors.text }]}>
-                {t('premium.monthly')}
-              </Text>
-              {selectedPlan === 'monthly' && (
-                <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
-              )}
-            </View>
-            <View style={styles.planPrice}>
-              <Text style={[styles.planPriceValue, { color: colors.text }]}>
-                $2.99
-              </Text>
-              <Text style={[styles.planPricePeriod, { color: colors.textSecondary }]}>
-                {t('premium.perMonth')}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-          {/* Yearly */}
-          <TouchableOpacity
-            style={[
-              styles.planCard,
-              { backgroundColor: colors.card },
-              selectedPlan === 'yearly' && styles.planCardSelected,
-              SHADOWS.small,
-            ]}
-            onPress={() => setSelectedPlan('yearly')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.saveBadge}>
-              <Text style={styles.saveBadgeText}>{t('premium.save', { percent: 44 })}</Text>
-            </View>
-            <View style={styles.planHeader}>
-              <Text style={[styles.planName, { color: colors.text }]}>
-                {t('premium.yearly')}
-              </Text>
-              {selectedPlan === 'yearly' && (
-                <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
-              )}
-            </View>
-            <View style={styles.planPrice}>
-              <Text style={[styles.planPriceValue, { color: colors.text }]}>
-                $19.99
-              </Text>
-              <Text style={[styles.planPricePeriod, { color: colors.textSecondary }]}>
-                {t('premium.perYear')}
-              </Text>
-            </View>
-            <Text style={[styles.planMonthly, { color: COLORS.success }]}>
-              $1.67/month
+
+        {/* Guest Warning */}
+        {user?.is_guest && (
+          <View style={[styles.guestWarning, { backgroundColor: COLORS.warning + '15', borderColor: COLORS.warning + '30' }]}>
+            <Ionicons name="information-circle" size={20} color={COLORS.warning} />
+            <Text style={[styles.guestWarningText, { color: colors.text }]}>
+              Create an account to purchase premium
             </Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        )}
         
-        {/* Trial Notice */}
-        <View style={styles.trialNotice}>
-          <Ionicons name="gift" size={20} color={COLORS.primary} />
-          <Text style={[styles.trialText, { color: colors.textSecondary }]}>
-            {t('premium.freeTrial')}
-          </Text>
-        </View>
+        {/* Pricing - Only show for non-guest */}
+        {!user?.is_guest && (
+          <>
+            <Text style={[styles.pricingTitle, { color: colors.text }]}>
+              Choose your plan
+            </Text>
+            
+            <View style={styles.plans}>
+              <TouchableOpacity
+                style={[
+                  styles.planCard,
+                  { backgroundColor: colors.card },
+                  selectedPlan === 'monthly' && styles.planCardSelected,
+                  SHADOWS.small,
+                ]}
+                onPress={() => setSelectedPlan('monthly')}
+                activeOpacity={0.8}
+              >
+                <View style={styles.planHeader}>
+                  <Text style={[styles.planName, { color: colors.text }]}>Monthly</Text>
+                  {selectedPlan === 'monthly' && (
+                    <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
+                  )}
+                </View>
+                <View style={styles.planPrice}>
+                  <Text style={[styles.planPriceValue, { color: colors.text }]}>$2.99</Text>
+                  <Text style={[styles.planPricePeriod, { color: colors.textSecondary }]}>/month</Text>
+                </View>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.planCard,
+                  { backgroundColor: colors.card },
+                  selectedPlan === 'yearly' && styles.planCardSelected,
+                  SHADOWS.small,
+                ]}
+                onPress={() => setSelectedPlan('yearly')}
+                activeOpacity={0.8}
+              >
+                <View style={styles.saveBadge}>
+                  <Text style={styles.saveBadgeText}>SAVE 44%</Text>
+                </View>
+                <View style={styles.planHeader}>
+                  <Text style={[styles.planName, { color: colors.text }]}>Yearly</Text>
+                  {selectedPlan === 'yearly' && (
+                    <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
+                  )}
+                </View>
+                <View style={styles.planPrice}>
+                  <Text style={[styles.planPriceValue, { color: colors.text }]}>$19.99</Text>
+                  <Text style={[styles.planPricePeriod, { color: colors.textSecondary }]}>/year</Text>
+                </View>
+                <Text style={[styles.planMonthly, { color: COLORS.success }]}>$1.67/month</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+        
+        {/* Restore Purchases */}
+        <TouchableOpacity
+          style={styles.restoreBtn}
+          onPress={handleRestore}
+          disabled={restoring}
+          activeOpacity={0.7}
+        >
+          {restoring ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Text style={[styles.restoreText, { color: COLORS.primary }]}>
+              Restore Purchases
+            </Text>
+          )}
+        </TouchableOpacity>
       </ScrollView>
       
       {/* Footer */}
@@ -192,15 +352,39 @@ export default function PaywallScreen() {
         { backgroundColor: colors.card },
         SHADOWS.medium,
       ]}>
-        <Button
-          title={`${t('premium.startTrial')} - ${selectedPlan === 'yearly' ? '$19.99/year' : '$2.99/month'}`}
+        <TouchableOpacity
+          style={[styles.purchaseBtn, loading && { opacity: 0.7 }]}
           onPress={handlePurchase}
-          loading={loading}
-          size="large"
-          style={styles.purchaseBtn}
-        />
+          disabled={loading}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={user?.is_guest ? ['#F59E0B', '#D97706'] : ['#6366F1', '#7C3AED']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.purchaseBtnGradient}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons
+                  name={user?.is_guest ? 'person-add' : 'diamond'}
+                  size={20}
+                  color="#fff"
+                />
+                <Text style={styles.purchaseBtnText}>
+                  {user?.is_guest
+                    ? 'Create Account to Unlock'
+                    : `Start Free Trial - ${selectedPlan === 'yearly' ? '$19.99/year' : '$2.99/month'}`
+                  }
+                </Text>
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
         <Text style={[styles.terms, { color: colors.textSecondary }]}>
-          {t('premium.cancelAnytime')}
+          Cancel anytime. Recurring billing.
         </Text>
       </View>
     </SafeAreaView>
@@ -225,7 +409,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: 120,
   },
   hero: {
     alignItems: 'center',
@@ -241,12 +425,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   heroTitle: {
-    fontSize: FONTS.sizes.xxl,
-    fontWeight: 'bold',
-    marginBottom: SPACING.xs,
+    fontSize: 26,
+    fontWeight: '800',
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: FONTS.sizes.md,
+    fontSize: 15,
   },
   featuresCard: {
     borderRadius: RADIUS.md,
@@ -271,10 +456,25 @@ const styles = StyleSheet.create({
   featureText: {
     flex: 1,
     fontSize: FONTS.sizes.md,
+    fontWeight: '500',
+  },
+  guestWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: SPACING.lg,
+    gap: 10,
+  },
+  guestWarningText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
   },
   pricingTitle: {
     fontSize: FONTS.sizes.lg,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: SPACING.md,
     textAlign: 'center',
   },
@@ -304,8 +504,9 @@ const styles = StyleSheet.create({
   },
   saveBadgeText: {
     color: '#fff',
-    fontSize: FONTS.sizes.xs,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   planHeader: {
     flexDirection: 'row',
@@ -322,37 +523,141 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   planPriceValue: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '800',
   },
   planPricePeriod: {
     fontSize: FONTS.sizes.sm,
     marginLeft: SPACING.xs,
   },
   planMonthly: {
-    fontSize: FONTS.sizes.xs,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     marginTop: SPACING.xs,
   },
-  trialNotice: {
-    flexDirection: 'row',
+  restoreBtn: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.md,
   },
-  trialText: {
-    fontSize: FONTS.sizes.sm,
-    marginLeft: SPACING.sm,
+  restoreText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: SPACING.lg,
     paddingBottom: SPACING.xl,
   },
   purchaseBtn: {
+    borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: SPACING.sm,
+  },
+  purchaseBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    gap: 10,
+  },
+  purchaseBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
   },
   terms: {
     fontSize: FONTS.sizes.xs,
     textAlign: 'center',
+  },
+  
+  // Success overlay
+  successOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  successContent: {
+    alignItems: 'center',
+  },
+  successCheckWrap: {
+    marginBottom: 24,
+  },
+  successCheckCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  successSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  
+  // Already premium
+  alreadyPremiumWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  premiumActiveCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  alreadyPremiumTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  alreadyPremiumSub: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  activeFeaturesCard: {
+    width: '100%',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+  },
+  activeFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    gap: 12,
+  },
+  activeFeatureText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  backHomeBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  backHomeBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

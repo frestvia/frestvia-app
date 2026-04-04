@@ -26,8 +26,10 @@ export default function StatsScreen() {
   const { isDark, colors } = useTheme();
   
   const { stats, fetchStats, isLoading } = useStatsStore();
-  const { user } = useAuthStore();
+  const { user, isPremiumUser } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
+  
+  const isPremium = isPremiumUser();
   
   useEffect(() => {
     fetchStats();
@@ -201,7 +203,7 @@ export default function StatsScreen() {
         />
         
         {/* Premium Advanced Insights */}
-        {!user?.is_premium && (
+        {!isPremium && (
           <TouchableOpacity
             style={[styles.premiumLockCard, { backgroundColor: colors.card }, SHADOWS.small]}
             onPress={() => router.push('/paywall')}

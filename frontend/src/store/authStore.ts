@@ -29,6 +29,9 @@ interface AuthState {
   loadToken: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (name: string) => Promise<void>;
+  activatePremium: () => Promise<void>;
+  deactivatePremium: () => Promise<void>;
+  isPremiumUser: () => boolean;
 }
 
 // Safe storage operations
@@ -83,6 +86,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       set({ user, token: access_token, isAuthenticated: true });
+      console.log('[Auth] Login success, premium:', user.is_premium);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Login failed');
     }
@@ -97,6 +101,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       set({ user, token: access_token, isAuthenticated: true });
+      console.log('[Auth] Register success, premium:', user.is_premium);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Registration failed');
     }
@@ -110,7 +115,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await safeSetItem('forgetly_token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
+      // Guest users are ALWAYS free
+      user.is_premium = false;
       set({ user, token: access_token, isAuthenticated: true });
+      console.log('[Auth] Guest login, premium: false (enforced)');
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Guest login failed');
     }
@@ -118,8 +126,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   logout: async () => {
     await safeRemoveItem('forgetly_token');
+    await safeRemoveItem('forgetly_premium');
     delete api.defaults.headers.common['Authorization'];
     set({ user: null, token: null, isAuthenticated: false });
+    console.log('[Auth] Logged out, premium state cleared');
   },
   
   loadToken: async () => {
@@ -128,7 +138,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         const response = await api.get('/auth/me');
-        set({ user: response.data, token, isAuthenticated: true, isLoading: false });
+        const userData = response.data;
+        
+        // Restore local premium status
+        const localPremium = await safeGetItem('forgetly_premium');
+        if (localPremium === 'true' && !userData.is_guest) {
+          userData.is_premium = true;
+        }
+        // Guest users are ALWAYS free regardless of DB state
+        if (userData.is_guest) {
+          userData.is_premium = false;
+        }
+        
+        set({ user: userData, token, isAuthenticated: true, isLoading: false });
+        console.log('[Auth] Token loaded, premium:', userData.is_premium, 'guest:', userData.is_guest);
       } else {
         set({ isLoading: false });
       }
@@ -141,9 +164,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   refreshUser: async () => {
     try {
       const response = await api.get('/auth/me');
-      set({ user: response.data });
+      const userData = response.data;
+      const currentUser = get().user;
+      
+      // Preserve local premium override for non-guests
+      if (currentUser?.is_premium && !userData.is_guest) {
+        userData.is_premium = true;
+      }
+      // Guest = always free
+      if (userData.is_guest) {
+        userData.is_premium = false;
+      }
+      
+      set({ user: userData });
+      console.log('[Auth] User refreshed, premium:', userData.is_premium);
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      console.error('[Auth] Failed to refresh user:', error);
     }
   },
   
@@ -154,5 +190,61 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Update failed');
     }
+  },
+
+  activatePremium: async () => {
+    try {
+      console.log('[Premium] Activating premium...');
+      
+      // 1. Call backend to persist
+      await api.post('/premium/activate');
+      console.log('[Premium] Backend activated');
+      
+      // 2. Persist locally
+      await safeSetItem('forgetly_premium', 'true');
+      console.log('[Premium] Local storage set');
+      
+      // 3. Update Zustand state immediately (triggers re-render everywhere)
+      const currentUser = get().user;
+      if (currentUser) {
+        const updatedUser = { ...currentUser, is_premium: true };
+        set({ user: updatedUser });
+        console.log('[Premium] State updated - all screens will re-render');
+      }
+      
+      // 4. Refresh from backend to confirm
+      const response = await api.get('/auth/me');
+      const serverUser = response.data;
+      serverUser.is_premium = true; // Ensure it's set
+      set({ user: serverUser });
+      console.log('[Premium] Confirmed from server, premium:', serverUser.is_premium);
+      
+    } catch (error: any) {
+      console.error('[Premium] Activation failed:', error);
+      throw new Error(error.response?.data?.detail || 'Failed to activate premium');
+    }
+  },
+
+  deactivatePremium: async () => {
+    try {
+      await api.post('/premium/deactivate');
+      await safeRemoveItem('forgetly_premium');
+      
+      const currentUser = get().user;
+      if (currentUser) {
+        set({ user: { ...currentUser, is_premium: false } });
+      }
+      console.log('[Premium] Deactivated');
+    } catch (error: any) {
+      console.error('[Premium] Deactivation failed:', error);
+      throw new Error(error.response?.data?.detail || 'Failed to deactivate premium');
+    }
+  },
+
+  isPremiumUser: () => {
+    const user = get().user;
+    // Guest users are NEVER premium
+    if (!user || user.is_guest) return false;
+    return user.is_premium === true;
   },
 }));
