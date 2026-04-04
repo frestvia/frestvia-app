@@ -229,7 +229,11 @@ export default function ProfileScreen() {
           
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/help-support')}
+            activeOpacity={0.7}
+          >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.warning + '20' }]}>
                 <Ionicons name="help-circle" size={20} color={COLORS.warning} />

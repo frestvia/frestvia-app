@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timedelta
 import bcrypt
 import jwt
+import random
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1072,6 +1073,89 @@ async def root():
 @api_router.get("/health")
 async def health():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+# ======================== SUPPORT CHAT ROUTE ========================
+
+class SupportChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+
+@api_router.post("/support/chat")
+async def support_chat(data: SupportChatRequest, user: dict = Depends(get_current_user)):
+    """AI-powered support chat for Forgetly app."""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    llm_key = os.environ.get('EMERGENT_LLM_KEY')
+    if not llm_key:
+        raise HTTPException(status_code=500, detail="Support chat is temporarily unavailable.")
+    
+    session_id = data.session_id or f"support-{user['id']}-{uuid.uuid4().hex[:8]}"
+    
+    system_message = """You are Forgetly's friendly AI support assistant. You help users with the Forgetly app - a smart checklist and reminder app that helps people never forget items when leaving places.
+
+KEY APP FEATURES you can help with:
+- Checklists: Create, edit, delete checklists with items. Users tap "I'M LEAVING" to enter exit mode and check off items.
+- Premium Features: Advanced Insights, Smart Suggestions, Background Geofencing, Shared Lists (unlimited).
+- Free vs Premium: Free users have limited checklists (3), locations (2). Premium unlocks everything.
+- Shared Lists: Create shared checklists with others using share codes.
+- Background Geofencing: Premium feature that auto-reminds when leaving saved locations.
+- Smart Suggestions: AI-powered checklist recommendations.
+- Advanced Analytics: Detailed stats, risk score, forgetting patterns, streaks, trends.
+- Locations: Save locations for reminders. Free: 2 max, Premium: unlimited.
+- Voice Reminders: Text-to-speech reads forgotten items aloud.
+- Dark Mode, Multi-language (15 languages), Password Reset via OTP.
+
+COMMON ISSUES:
+1. Can't log in -> Check email/password, use Forgot Password, guest accounts can't access premium.
+2. Premium not showing -> Log out and back in, premium syncs on login.
+3. Buttons not working -> Restart app, some need a checklist selected first.
+4. Geofencing not working -> Check location permissions and Settings toggle.
+5. Can't share lists -> Requires premium.
+6. Voice not working -> Check Settings toggle and device volume.
+7. Dark mode issues -> Settings > Appearance > Theme.
+
+GUIDELINES: Be friendly, concise (<150 words), use emojis sparingly. If stuck, suggest support@forgetly.app."""
+
+    try:
+        chat = LlmChat(
+            api_key=llm_key,
+            session_id=session_id,
+            system_message=system_message
+        )
+        chat.with_model("openai", "gpt-4.1-nano")
+        
+        user_message = UserMessage(text=data.message)
+        response = await chat.send_message(user_message)
+        
+        chat_entry = {
+            "user_id": user["id"],
+            "session_id": session_id,
+            "user_message": data.message,
+            "ai_response": response,
+            "created_at": datetime.utcnow()
+        }
+        await db.support_chats.insert_one(chat_entry)
+        
+        return {
+            "response": response,
+            "session_id": session_id,
+            "success": True
+        }
+    except Exception as e:
+        logger.error(f"Support chat error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get response. Please try again.")
+
+
+@api_router.get("/support/history")
+async def get_support_history(user: dict = Depends(get_current_user)):
+    """Get chat history for the current user."""
+    chats = await db.support_chats.find(
+        {"user_id": user["id"]},
+        {"_id": 0, "user_message": 1, "ai_response": 1, "created_at": 1, "session_id": 1}
+    ).sort("created_at", -1).to_list(50)
+    return {"chats": chats, "success": True}
+
 
 # Include router
 app.include_router(api_router)
