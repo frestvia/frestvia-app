@@ -15,8 +15,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withSequence,
-  runOnJS,
 } from 'react-native-reanimated';
 import { useChecklistStore } from '../src/store/checklistStore';
 import { useStatsStore } from '../src/store/statsStore';
@@ -39,6 +37,7 @@ export default function ExitModeScreen() {
   const [isComplete, setIsComplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
   
   const scale = useSharedValue(1);
   const successScale = useSharedValue(0);
@@ -111,6 +110,7 @@ export default function ExitModeScreen() {
       
       if (forgottenItems.length === 0) {
         // Perfect exit!
+        setShowSuccess(true);
         successScale.value = withSpring(1);
         Vibration.vibrate([0, 100, 50, 100]);
         if (voiceEnabled) speakSuccess();
@@ -228,13 +228,15 @@ export default function ExitModeScreen() {
         ))}
       </ScrollView>
       
-      {/* Footer */}
+      {/* Footer - zIndex ensures it's always tappable */}
       <View style={[
         styles.footer,
         {
           backgroundColor: colors.card,
           borderTopWidth: 1,
           borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : colors.border,
+          zIndex: 10,
+          elevation: 0,
         },
       ]}>
         <TouchableOpacity
@@ -247,35 +249,40 @@ export default function ExitModeScreen() {
           onPress={handleFinish}
           activeOpacity={0.7}
           disabled={loading}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          {loading ? (
-            <View style={styles.finishButtonInner}>
-              <View style={[styles.loadingDot, { backgroundColor: '#fff' }]} />
-              <Text style={styles.finishButtonText}>Processing...</Text>
-            </View>
-          ) : (
-            <View style={styles.finishButtonInner}>
-              <Ionicons
-                name={isComplete ? 'checkmark-circle' : 'exit'}
-                size={24}
-                color="#fff"
-              />
-              <Text style={styles.finishButtonText}>
-                {isComplete ? 'All Done - Go!' : 'Finish Anyway'}
-              </Text>
-            </View>
-          )}
+          <View style={styles.finishButtonInner} pointerEvents="none">
+            {loading ? (
+              <>
+                <View style={[styles.loadingDot, { backgroundColor: '#fff' }]} />
+                <Text style={styles.finishButtonText}>Processing...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons
+                  name={isComplete ? 'checkmark-circle' : 'exit'}
+                  size={24}
+                  color="#fff"
+                />
+                <Text style={styles.finishButtonText}>
+                  {isComplete ? 'All Done - Go!' : 'Finish Anyway'}
+                </Text>
+              </>
+            )}
+          </View>
         </TouchableOpacity>
       </View>
       
-      {/* Success Overlay */}
-      <Animated.View style={[styles.successOverlay, successAnimatedStyle]} pointerEvents="none">
-        <View style={styles.successContent}>
-          <Ionicons name="checkmark-circle" size={80} color={COLORS.success} />
-          <Text style={styles.successText}>Perfect Exit!</Text>
-          <Text style={styles.successSubtext}>Nothing forgotten today</Text>
+      {/* Success Overlay - only rendered when needed to avoid blocking touches */}
+      {showSuccess && (
+        <View style={styles.successOverlay} pointerEvents="none">
+          <Animated.View style={[styles.successContent, successAnimatedStyle]}>
+            <Ionicons name="checkmark-circle" size={80} color={COLORS.success} />
+            <Text style={styles.successText}>Perfect Exit!</Text>
+            <Text style={styles.successSubtext}>Nothing forgotten today</Text>
+          </Animated.View>
         </View>
-      </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
