@@ -5,9 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   Modal,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -306,10 +308,14 @@ export default function SettingsScreen() {
         <View style={[
           styles.card,
           { backgroundColor: colors.card },
-          SHADOWS.small,
         ]}>
-          <TouchableOpacity
-            style={styles.menuItem}
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
+            ]}
+            android_ripple={{ color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', borderless: false }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
               Alert.alert(
                 'Privacy Policy',
@@ -318,7 +324,7 @@ export default function SettingsScreen() {
               );
             }}
           >
-            <View style={styles.menuLeft}>
+            <View style={styles.menuLeft} pointerEvents="none">
               <View style={[styles.menuIcon, { backgroundColor: COLORS.primary + '20' }]}>
                 <Ionicons name="shield-checkmark" size={20} color={COLORS.primary} />
               </View>
@@ -327,12 +333,17 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          </Pressable>
           
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <TouchableOpacity
-            style={styles.menuItem}
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
+            ]}
+            android_ripple={{ color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', borderless: false }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
               Alert.alert(
                 'Terms of Service',
@@ -341,7 +352,7 @@ export default function SettingsScreen() {
               );
             }}
           >
-            <View style={styles.menuLeft}>
+            <View style={styles.menuLeft} pointerEvents="none">
               <View style={[styles.menuIcon, { backgroundColor: COLORS.success + '20' }]}>
                 <Ionicons name="document-text" size={20} color={COLORS.success} />
               </View>
@@ -350,12 +361,17 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          </Pressable>
           
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <TouchableOpacity
-            style={styles.menuItem}
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
+            ]}
+            android_ripple={{ color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', borderless: false }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
               Alert.alert(
                 'Rate Forgetly',
@@ -365,7 +381,6 @@ export default function SettingsScreen() {
                   {
                     text: 'Rate Now',
                     onPress: () => {
-                      // Will open app store when published
                       Alert.alert('Thank you!', 'We appreciate your support!');
                     },
                   },
@@ -373,7 +388,7 @@ export default function SettingsScreen() {
               );
             }}
           >
-            <View style={styles.menuLeft}>
+            <View style={styles.menuLeft} pointerEvents="none">
               <View style={[styles.menuIcon, { backgroundColor: COLORS.streak + '20' }]}>
                 <Ionicons name="star" size={20} color={COLORS.streak} />
               </View>
@@ -382,7 +397,7 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
         
         {/* App Info */}
@@ -524,6 +539,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: SPACING.md,
+    minHeight: 56,
+    zIndex: 1,
   },
   menuLeft: {
     flexDirection: 'row',
