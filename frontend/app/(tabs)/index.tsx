@@ -300,12 +300,12 @@ export default function HomeScreen() {
         )}
         
         {/* Main CTA: I'M LEAVING Button */}
-        <View style={styles.ctaContainer}>
-          {/* Outer glow ring */}
-          <Animated.View style={[styles.outerGlow, outerGlowStyle]} />
+        <View style={styles.ctaContainer} pointerEvents="box-none">
+          {/* Outer glow ring - pass through touches */}
+          <Animated.View style={[styles.outerGlow, outerGlowStyle]} pointerEvents="none" />
           
-          {/* Pulse ring */}
-          <Animated.View style={[styles.pulseRing, pulseRingStyle]} />
+          {/* Pulse ring - pass through touches */}
+          <Animated.View style={[styles.pulseRing, pulseRingStyle]} pointerEvents="none" />
           
           {/* Main Button */}
           <Animated.View style={buttonAnimatedStyle}>
@@ -313,7 +313,7 @@ export default function HomeScreen() {
               onPress={handleExitMode}
               onPressIn={handleButtonPressIn}
               onPressOut={handleButtonPressOut}
-              activeOpacity={1}
+              activeOpacity={0.9}
               style={styles.ctaButtonOuter}
             >
               <LinearGradient
