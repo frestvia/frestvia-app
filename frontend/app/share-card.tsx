@@ -1,13 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Share,
-  Platform,
+  Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,61 +19,54 @@ import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../src/constants/theme
 export default function ShareCardScreen() {
   const router = useRouter();
   const { isDark, colors } = useTheme();
-
   const { user } = useAuthStore();
   const { stats } = useStatsStore();
-
   const [sharing, setSharing] = useState(false);
 
-  // Build dynamic share message
-  const buildShareMessage = () => {
-    const itemsSaved = stats?.total_items_checked || 0;
-    const streak = stats?.current_streak || 0;
-    const totalExits = stats?.total_exits || 0;
-
-    let message = "I'm using Frestvia to make sure I never forget my important items. Try it now!";
-
-    if (itemsSaved > 0 || streak > 0 || totalExits > 0) {
-      message += '\n\n';
-      if (itemsSaved > 0) message += `Items Saved: ${itemsSaved}\n`;
-      if (streak > 0) message += `Day Streak: ${streak}\n`;
-      if (totalExits > 0) message += `Total Exits: ${totalExits}\n`;
-    }
-
-    return message;
-  };
-
-  // Native share - uses OS share sheet directly
+  // ====== NATIVE SHARE - EXACTLY AS USER SPECIFIED ======
   const handleShare = async () => {
+    console.log('SHARE CLICKED');
+
     if (sharing) return;
     setSharing(true);
 
     try {
-      const message = buildShareMessage();
+      // Build share message
+      let msg = "I'm using Frestvia to never forget my important items. Try it now!";
 
-      const result = await Share.share(
-        {
-          message,
-          title: 'Frestvia - Never Forget Again',
-        },
-        {
-          dialogTitle: 'Share your Frestvia stats',
-          subject: 'Check out Frestvia!',
-        }
-      );
+      const itemsSaved = stats?.total_items_checked || 0;
+      const streak = stats?.current_streak || 0;
+      const totalExits = stats?.total_exits || 0;
 
-      if (result.action === Share.sharedAction) {
-        console.log('[Share] Shared successfully');
-      } else if (result.action === Share.dismissedAction) {
-        console.log('[Share] Dismissed');
+      if (itemsSaved > 0 || streak > 0 || totalExits > 0) {
+        msg += '\n\n';
+        if (itemsSaved > 0) msg += `Items Saved: ${itemsSaved}\n`;
+        if (streak > 0) msg += `Day Streak: ${streak}\n`;
+        if (totalExits > 0) msg += `Total Exits: ${totalExits}`;
       }
+
+      console.log('SHARE MESSAGE:', msg);
+
+      // ONLY native Share API - NO iframe, NO webview, NO external URL
+      await Share.share({
+        message: msg,
+        title: 'Frestvia App',
+      });
+
+      console.log('SHARE COMPLETED');
     } catch (error: any) {
-      console.error('[Share] Error:', error);
-      Alert.alert(
-        'Unable to Share',
-        'Something went wrong. Please try again.',
-        [{ text: 'OK' }]
-      );
+      console.log('Share error:', error);
+
+      // Web preview fallback - show copyable message
+      if (Platform.OS === 'web') {
+        Alert.alert(
+          'Share this message',
+          "I'm using Frestvia to never forget my important items. Try it now!",
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Unable to share', 'Please try again.', [{ text: 'OK' }]);
+      }
     } finally {
       setSharing(false);
     }
@@ -152,15 +145,18 @@ export default function ShareCardScreen() {
         </View>
       </View>
 
-      {/* Action Buttons */}
+      {/* ====== SHARE BUTTON - Direct TouchableOpacity, no wrappers ====== */}
       <View style={styles.actions}>
         <TouchableOpacity
-          onPress={handleShare}
+          onPress={() => {
+            console.log('SHARE CLICKED');
+            handleShare();
+          }}
+          activeOpacity={0.7}
           disabled={sharing}
-          activeOpacity={0.8}
           style={[
             styles.shareBtn,
-            { opacity: sharing ? 0.7 : 1 },
+            { opacity: sharing ? 0.6 : 1 },
           ]}
         >
           {sharing ? (
@@ -223,6 +219,7 @@ const styles = StyleSheet.create({
       android: {
         elevation: 8,
       },
+      default: {},
     }),
   },
   cardHeader: {
