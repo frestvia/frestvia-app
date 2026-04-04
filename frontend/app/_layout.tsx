@@ -71,8 +71,9 @@ export default function RootLayout() {
         <Stack.Screen
           name="exit-mode"
           options={{
-            presentation: 'modal',
+            presentation: 'fullScreenModal',
             animation: 'slide_from_bottom',
+            gestureEnabled: false,
           }}
         />
         <Stack.Screen

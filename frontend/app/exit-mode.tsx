@@ -5,8 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   Alert,
   Vibration,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -21,7 +23,7 @@ import { useStatsStore } from '../src/store/statsStore';
 import { useAuthStore } from '../src/store/authStore';
 import { useSpeech } from '../src/hooks/useSpeech';
 import { ChecklistItemRow } from '../src/components/ChecklistItemRow';
-import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../src/constants/theme';
 import { useTranslation } from 'react-i18next';
 
 export default function ExitModeScreen() {
@@ -209,7 +211,7 @@ export default function ExitModeScreen() {
         </View>
       </View>
       
-      {/* Items List */}
+      {/* Items List - paddingBottom accounts for fixed footer */}
       <ScrollView
         style={styles.itemsList}
         contentContainerStyle={styles.itemsContent}
@@ -228,52 +230,47 @@ export default function ExitModeScreen() {
         ))}
       </ScrollView>
       
-      {/* Footer - zIndex ensures it's always tappable */}
+      {/* Fixed Footer - absolutely positioned so ScrollView can never block it */}
       <View style={[
-        styles.footer,
+        styles.fixedFooter,
         {
           backgroundColor: colors.card,
           borderTopWidth: 1,
           borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : colors.border,
-          zIndex: 10,
-          elevation: 0,
         },
       ]}>
-        <TouchableOpacity
-          style={[
+        <Pressable
+          style={({ pressed }) => [
             styles.finishButton,
             {
               backgroundColor: isComplete ? COLORS.success : COLORS.primary,
+              opacity: pressed ? 0.8 : (loading ? 0.6 : 1),
             },
           ]}
           onPress={handleFinish}
-          activeOpacity={0.7}
           disabled={loading}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          <View style={styles.finishButtonInner} pointerEvents="none">
-            {loading ? (
-              <>
-                <View style={[styles.loadingDot, { backgroundColor: '#fff' }]} />
-                <Text style={styles.finishButtonText}>Processing...</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons
-                  name={isComplete ? 'checkmark-circle' : 'exit'}
-                  size={24}
-                  color="#fff"
-                />
-                <Text style={styles.finishButtonText}>
-                  {isComplete ? 'All Done - Go!' : 'Finish Anyway'}
-                </Text>
-              </>
-            )}
-          </View>
-        </TouchableOpacity>
+          {loading ? (
+            <View style={styles.finishButtonInner} pointerEvents="none">
+              <View style={[styles.loadingDot, { backgroundColor: '#fff' }]} />
+              <Text style={styles.finishButtonText}>Processing...</Text>
+            </View>
+          ) : (
+            <View style={styles.finishButtonInner} pointerEvents="none">
+              <Ionicons
+                name={isComplete ? 'checkmark-circle' : 'exit'}
+                size={24}
+                color="#fff"
+              />
+              <Text style={styles.finishButtonText}>
+                {isComplete ? 'All Done - Go!' : 'Finish Anyway'}
+              </Text>
+            </View>
+          )}
+        </Pressable>
       </View>
       
-      {/* Success Overlay - only rendered when needed to avoid blocking touches */}
+      {/* Success Overlay - only rendered when needed */}
       {showSuccess && (
         <View style={styles.successOverlay} pointerEvents="none">
           <Animated.View style={[styles.successContent, successAnimatedStyle]}>
@@ -351,17 +348,20 @@ const styles = StyleSheet.create({
   },
   itemsContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
+    paddingBottom: 120,
   },
   sectionTitle: {
     fontSize: FONTS.sizes.sm,
     marginBottom: SPACING.md,
     textAlign: 'center',
   },
-  footer: {
-    flexDirection: 'row',
+  fixedFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    paddingBottom: Platform.OS === 'ios' ? 34 : SPACING.xl,
   },
   finishButton: {
     flex: 1,
