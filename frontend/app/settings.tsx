@@ -319,8 +319,11 @@ export default function SettingsScreen() {
             onPress={() => {
               Alert.alert(
                 'Privacy Policy',
-                'Forgetly respects your privacy. Your data is stored locally on your device and securely in the cloud. We do not sell or share your personal information with third parties.\n\nData collected:\n• Account info (email)\n• Checklists and items\n• Location data (with permission)\n\nYou can delete your account and all data at any time.',
-                [{ text: 'OK' }]
+                'Forgetly respects your privacy. Your data is stored locally on your device and securely in the cloud. We do not sell or share your personal information with third parties.\n\nData collected:\n• Account info (email)\n• Checklists and items\n• Location data (with permission)\n\nYou can delete your account and all data at any time.\n\nContact: Contact@frestvia.store',
+                [
+                  { text: 'Email Us', onPress: () => Linking.openURL('mailto:Contact@frestvia.store?subject=Privacy%20Inquiry').catch(() => {}) },
+                  { text: 'OK' },
+                ]
               );
             }}
           >

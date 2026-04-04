@@ -7,11 +7,12 @@ import {
   Pressable,
   Animated,
   Alert,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as ExpoLinking from 'expo-linking';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../src/constants/theme';
 
 const SUPPORT_EMAIL = 'Contact@frestvia.store';
@@ -115,26 +116,15 @@ export default function HelpSupportScreen() {
   const router = useRouter();
   const { isDark, colors } = useTheme();
 
-  const openEmail = useCallback(async (subject: string) => {
+  const openEmail = useCallback((subject: string) => {
     const mailtoUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}`;
-    try {
-      const canOpen = await ExpoLinking.canOpenURL(mailtoUrl);
-      if (canOpen) {
-        await ExpoLinking.openURL(mailtoUrl);
-      } else {
-        Alert.alert(
-          'Email Us',
-          `Send your message to:\n\n${SUPPORT_EMAIL}\n\nSubject: ${subject}`,
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
+    Linking.openURL(mailtoUrl).catch(() => {
       Alert.alert(
-        'Email Us',
-        `Send your message to:\n\n${SUPPORT_EMAIL}\n\nSubject: ${subject}`,
+        'No Email App Found',
+        `Please send your message to:\n\n${SUPPORT_EMAIL}`,
         [{ text: 'OK' }]
       );
-    }
+    });
   }, []);
 
   return (
@@ -207,21 +197,23 @@ export default function HelpSupportScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.contactRow,
-              pressed && { opacity: 0.7, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
             onPress={() => router.push('/support-chat')}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
-            <View style={[styles.contactIcon, { backgroundColor: COLORS.primary + '15' }]}>
+            <View style={[styles.contactIcon, { backgroundColor: COLORS.primary + '15' }]} pointerEvents="none">
               <Ionicons name="chatbubble-ellipses" size={20} color={COLORS.primary} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1 }} pointerEvents="none">
               <Text style={[styles.contactTitle, { color: colors.text }]}>Live Chat</Text>
               <Text style={[styles.contactDesc, { color: colors.textSecondary }]}>
                 Chat with our AI support now
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+            <View pointerEvents="none">
+              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+            </View>
           </Pressable>
 
           <View style={[styles.faqDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : colors.border }]} />
@@ -229,21 +221,23 @@ export default function HelpSupportScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.contactRow,
-              pressed && { opacity: 0.7, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
             onPress={() => openEmail('Forgetly Support Request')}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
-            <View style={[styles.contactIcon, { backgroundColor: COLORS.success + '15' }]}>
+            <View style={[styles.contactIcon, { backgroundColor: COLORS.success + '15' }]} pointerEvents="none">
               <Ionicons name="mail" size={20} color={COLORS.success} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1 }} pointerEvents="none">
               <Text style={[styles.contactTitle, { color: colors.text }]}>Email Support</Text>
               <Text style={[styles.contactDesc, { color: COLORS.primary }]}>
                 {SUPPORT_EMAIL}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+            <View pointerEvents="none">
+              <Ionicons name="open-outline" size={18} color={COLORS.primary} />
+            </View>
           </Pressable>
 
           <View style={[styles.faqDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : colors.border }]} />
@@ -251,21 +245,23 @@ export default function HelpSupportScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.contactRow,
-              pressed && { opacity: 0.7, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
             onPress={() => openEmail('Forgetly Bug Report')}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
-            <View style={[styles.contactIcon, { backgroundColor: COLORS.error + '15' }]}>
+            <View style={[styles.contactIcon, { backgroundColor: COLORS.error + '15' }]} pointerEvents="none">
               <Ionicons name="bug" size={20} color={COLORS.error} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1 }} pointerEvents="none">
               <Text style={[styles.contactTitle, { color: colors.text }]}>Report a Bug</Text>
               <Text style={[styles.contactDesc, { color: colors.textSecondary }]}>
-                Help us improve Forgetly
+                {SUPPORT_EMAIL}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+            <View pointerEvents="none">
+              <Ionicons name="open-outline" size={18} color={COLORS.primary} />
+            </View>
           </Pressable>
         </View>
 
