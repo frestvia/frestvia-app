@@ -565,8 +565,11 @@ async def get_stats(user = Depends(get_current_user)):
     week_start = today_start - timedelta(days=7)
     month_start = today_start - timedelta(days=30)
     
-    # Get all exits
-    all_exits = await db.exits.find({"user_id": user["id"]}).to_list(1000)
+    # Get all exits with projection for performance
+    all_exits = await db.exits.find(
+        {"user_id": user["id"]},
+        {"created_at": 1, "checked_items": 1, "forgotten_items": 1, "checklist_name": 1}
+    ).to_list(1000)
     
     # Calculate stats
     items_saved_today = 0
