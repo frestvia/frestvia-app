@@ -23,7 +23,6 @@ import { useStatsStore } from '../src/store/statsStore';
 import { useAuthStore } from '../src/store/authStore';
 import { useSpeech } from '../src/hooks/useSpeech';
 import { ChecklistItemRow } from '../src/components/ChecklistItemRow';
-import { Button } from '../src/components/Button';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
 import { useTranslation } from 'react-i18next';
 
@@ -232,29 +231,41 @@ export default function ExitModeScreen() {
       {/* Footer */}
       <View style={[
         styles.footer,
-        { backgroundColor: colors.card },
-        SHADOWS.medium,
+        {
+          backgroundColor: colors.card,
+          borderTopWidth: 1,
+          borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : colors.border,
+        },
       ]}>
-        {isComplete ? (
-          <Button
-            title="All Done - Go!"
-            onPress={handleFinish}
-            loading={loading}
-            size="large"
-            variant="secondary"
-            style={{ flex: 1 }}
-            icon={<Ionicons name="checkmark-circle" size={24} color="#fff" />}
-          />
-        ) : (
-          <Button
-            title="Finish Anyway"
-            onPress={handleFinish}
-            loading={loading}
-            size="large"
-            style={{ flex: 1 }}
-            icon={<Ionicons name="exit" size={24} color="#fff" />}
-          />
-        )}
+        <TouchableOpacity
+          style={[
+            styles.finishButton,
+            {
+              backgroundColor: isComplete ? COLORS.success : COLORS.primary,
+            },
+          ]}
+          onPress={handleFinish}
+          activeOpacity={0.7}
+          disabled={loading}
+        >
+          {loading ? (
+            <View style={styles.finishButtonInner}>
+              <View style={[styles.loadingDot, { backgroundColor: '#fff' }]} />
+              <Text style={styles.finishButtonText}>Processing...</Text>
+            </View>
+          ) : (
+            <View style={styles.finishButtonInner}>
+              <Ionicons
+                name={isComplete ? 'checkmark-circle' : 'exit'}
+                size={24}
+                color="#fff"
+              />
+              <Text style={styles.finishButtonText}>
+                {isComplete ? 'All Done - Go!' : 'Finish Anyway'}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
       
       {/* Success Overlay */}
@@ -345,6 +356,29 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     paddingBottom: SPACING.xl,
   },
+  finishButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  finishButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  finishButtonText: {
+    color: '#fff',
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '600',
+  },
+  loadingDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255,255,255,0.95)',
@@ -366,4 +400,3 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
 });
-;
