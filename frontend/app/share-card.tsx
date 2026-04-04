@@ -7,64 +7,78 @@ import {
   Alert,
   Share,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import ViewShot from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
 import { useAuthStore } from '../src/store/authStore';
 import { useStatsStore } from '../src/store/statsStore';
-import { Button } from '../src/components/Button';
-import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
+import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../src/constants/theme';
 
 export default function ShareCardScreen() {
   const router = useRouter();
   const { isDark, colors } = useTheme();
-  
+
   const { user } = useAuthStore();
   const { stats } = useStatsStore();
-  
-  const viewShotRef = useRef<ViewShot>(null);
+
   const [sharing, setSharing] = useState(false);
-  
+
+  // Build dynamic share message
+  const buildShareMessage = () => {
+    const itemsSaved = stats?.total_items_checked || 0;
+    const streak = stats?.current_streak || 0;
+    const totalExits = stats?.total_exits || 0;
+
+    let message = "I'm using Frestvia to make sure I never forget my important items. Try it now!";
+
+    if (itemsSaved > 0 || streak > 0 || totalExits > 0) {
+      message += '\n\n';
+      if (itemsSaved > 0) message += `Items Saved: ${itemsSaved}\n`;
+      if (streak > 0) message += `Day Streak: ${streak}\n`;
+      if (totalExits > 0) message += `Total Exits: ${totalExits}\n`;
+    }
+
+    return message;
+  };
+
+  // Native share - uses OS share sheet directly
   const handleShare = async () => {
+    if (sharing) return;
     setSharing(true);
+
     try {
-      if (viewShotRef.current?.capture) {
-        const uri = await viewShotRef.current.capture();
-        
-        if (Platform.OS === 'web') {
-          // Web fallback - share text
-          await Share.share({
-            message: `I've saved ${stats?.total_items_checked || 0} items from being forgotten using Forgotten Item Reminder! My current streak is ${stats?.current_streak || 0} days. Download the app and never forget anything again!`,
-          });
-        } else {
-          const isAvailable = await Sharing.isAvailableAsync();
-          if (isAvailable) {
-            await Sharing.shareAsync(uri, {
-              mimeType: 'image/png',
-              dialogTitle: 'Share your stats',
-            });
-          } else {
-            await Share.share({
-              message: `I've saved ${stats?.total_items_checked || 0} items from being forgotten! Download Forgotten Item Reminder app!`,
-            });
-          }
+      const message = buildShareMessage();
+
+      const result = await Share.share(
+        {
+          message,
+          title: 'Frestvia - Never Forget Again',
+        },
+        {
+          dialogTitle: 'Share your Frestvia stats',
+          subject: 'Check out Frestvia!',
         }
+      );
+
+      if (result.action === Share.sharedAction) {
+        console.log('[Share] Shared successfully');
+      } else if (result.action === Share.dismissedAction) {
+        console.log('[Share] Dismissed');
       }
     } catch (error: any) {
-      console.error('Share error:', error);
-      // Fallback to text share
-      await Share.share({
-        message: `I've saved ${stats?.total_items_checked || 0} items from being forgotten using Forgotten Item Reminder! Download the app and never forget anything again!`,
-      });
+      console.error('[Share] Error:', error);
+      Alert.alert(
+        'Unable to Share',
+        'Something went wrong. Please try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setSharing(false);
     }
   };
-  
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
@@ -77,80 +91,88 @@ export default function ShareCardScreen() {
         </Text>
         <View style={{ width: 44 }} />
       </View>
-      
-      {/* Shareable Card */}
+
+      {/* Stats Card Preview */}
       <View style={styles.cardContainer}>
-        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
-          <View style={styles.shareCard}>
-            {/* Card Header */}
-            <View style={styles.cardHeader}>
-              <Ionicons name="checkmark-circle" size={32} color="#fff" />
-              <Text style={styles.cardAppName}>Forgotten Item Reminder</Text>
+        <View style={styles.shareCard}>
+          {/* Card Header */}
+          <View style={styles.cardHeader}>
+            <Ionicons name="checkmark-circle" size={32} color="#fff" />
+            <Text style={styles.cardAppName}>Frestvia</Text>
+          </View>
+
+          {/* User Info */}
+          <View style={styles.cardUserInfo}>
+            <View style={styles.cardAvatar}>
+              <Text style={styles.cardAvatarText}>
+                {user?.name?.charAt(0)?.toUpperCase() || 'G'}
+              </Text>
             </View>
-            
-            {/* User Info */}
-            <View style={styles.cardUserInfo}>
-              <View style={styles.cardAvatar}>
-                <Text style={styles.cardAvatarText}>
-                  {user?.name?.charAt(0)?.toUpperCase() || 'G'}
-                </Text>
-              </View>
-              <Text style={styles.cardUserName}>{user?.name || 'Guest'}</Text>
+            <Text style={styles.cardUserName}>{user?.name || 'Guest'}</Text>
+          </View>
+
+          {/* Stats */}
+          <View style={styles.cardStats}>
+            <View style={styles.cardStatItem}>
+              <Text style={styles.cardStatValue}>{stats?.total_items_checked || 0}</Text>
+              <Text style={styles.cardStatLabel}>Items Saved</Text>
             </View>
-            
-            {/* Stats */}
-            <View style={styles.cardStats}>
-              <View style={styles.cardStatItem}>
-                <Text style={styles.cardStatValue}>{stats?.total_items_checked || 0}</Text>
-                <Text style={styles.cardStatLabel}>Items Saved</Text>
+            <View style={styles.cardStatDivider} />
+            <View style={styles.cardStatItem}>
+              <View style={styles.streakValue}>
+                <Ionicons name="flame" size={24} color={COLORS.streak} />
+                <Text style={styles.cardStatValue}>{stats?.current_streak || 0}</Text>
               </View>
-              <View style={styles.cardStatDivider} />
-              <View style={styles.cardStatItem}>
-                <View style={styles.streakValue}>
-                  <Ionicons name="flame" size={24} color={COLORS.streak} />
-                  <Text style={styles.cardStatValue}>{stats?.current_streak || 0}</Text>
-                </View>
-                <Text style={styles.cardStatLabel}>Day Streak</Text>
-              </View>
-              <View style={styles.cardStatDivider} />
-              <View style={styles.cardStatItem}>
-                <Text style={styles.cardStatValue}>{stats?.total_exits || 0}</Text>
-                <Text style={styles.cardStatLabel}>Total Exits</Text>
-              </View>
+              <Text style={styles.cardStatLabel}>Day Streak</Text>
             </View>
-            
-            {/* Fun Message */}
-            <View style={styles.cardMessage}>
-              {stats?.total_items_forgotten && stats.total_items_forgotten > 0 ? (
-                <Text style={styles.cardMessageText}>
-                  I almost forgot {stats.total_items_forgotten} items... but this app saved me!
-                </Text>
-              ) : (
-                <Text style={styles.cardMessageText}>
-                  Never forgotten a thing since using this app!
-                </Text>
-              )}
-            </View>
-            
-            {/* Footer */}
-            <View style={styles.cardFooter}>
-              <Text style={styles.cardFooterText}>Download the app and never forget anything!</Text>
+            <View style={styles.cardStatDivider} />
+            <View style={styles.cardStatItem}>
+              <Text style={styles.cardStatValue}>{stats?.total_exits || 0}</Text>
+              <Text style={styles.cardStatLabel}>Total Exits</Text>
             </View>
           </View>
-        </ViewShot>
+
+          {/* Fun Message */}
+          <View style={styles.cardMessage}>
+            {stats?.total_items_forgotten && stats.total_items_forgotten > 0 ? (
+              <Text style={styles.cardMessageText}>
+                I almost forgot {stats.total_items_forgotten} items... but Frestvia saved me!
+              </Text>
+            ) : (
+              <Text style={styles.cardMessageText}>
+                Never forgotten a thing since using Frestvia!
+              </Text>
+            )}
+          </View>
+
+          {/* Footer */}
+          <View style={styles.cardFooter}>
+            <Text style={styles.cardFooterText}>Download Frestvia and never forget anything!</Text>
+          </View>
+        </View>
       </View>
-      
+
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <Button
-          title="Share to Social"
+        <TouchableOpacity
           onPress={handleShare}
-          loading={sharing}
-          size="large"
-          style={styles.shareBtn}
-          icon={<Ionicons name="share-social" size={24} color="#fff" />}
-        />
-        
+          disabled={sharing}
+          activeOpacity={0.8}
+          style={[
+            styles.shareBtn,
+            { opacity: sharing ? 0.7 : 1 },
+          ]}
+        >
+          {sharing ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <Ionicons name="share-social" size={24} color="#fff" />
+              <Text style={styles.shareBtnText}>Share to Social</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
         <Text style={[styles.hint, { color: colors.textSecondary }]}>
           Share your progress with friends!
         </Text>
@@ -191,7 +213,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
-    ...SHADOWS.large,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -281,7 +313,19 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xxl,
   },
   shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    height: 56,
+    borderRadius: RADIUS.md,
+    gap: 10,
     marginBottom: SPACING.md,
+  },
+  shareBtnText: {
+    color: '#fff',
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '600',
   },
   hint: {
     fontSize: FONTS.sizes.sm,
