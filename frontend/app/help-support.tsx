@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   ScrollView,
   Pressable,
   Animated,
-  Linking,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ExpoLinking from 'expo-linking';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS } from '../src/constants/theme';
+
+const SUPPORT_EMAIL = 'Contact@frestvia.store';
 
 const FAQ_DATA = [
   {
@@ -112,6 +115,28 @@ export default function HelpSupportScreen() {
   const router = useRouter();
   const { isDark, colors } = useTheme();
 
+  const openEmail = useCallback(async (subject: string) => {
+    const mailtoUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}`;
+    try {
+      const canOpen = await ExpoLinking.canOpenURL(mailtoUrl);
+      if (canOpen) {
+        await ExpoLinking.openURL(mailtoUrl);
+      } else {
+        Alert.alert(
+          'Email Us',
+          `Send your message to:\n\n${SUPPORT_EMAIL}\n\nSubject: ${subject}`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Email Us',
+        `Send your message to:\n\n${SUPPORT_EMAIL}\n\nSubject: ${subject}`,
+        [{ text: 'OK' }]
+      );
+    }
+  }, []);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
@@ -206,9 +231,7 @@ export default function HelpSupportScreen() {
               styles.contactRow,
               pressed && { opacity: 0.7, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
-            onPress={() => {
-              Linking.openURL('mailto:Contact@frestvia.store?subject=Forgetly%20Support%20Request');
-            }}
+            onPress={() => openEmail('Forgetly Support Request')}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
             <View style={[styles.contactIcon, { backgroundColor: COLORS.success + '15' }]}>
@@ -217,7 +240,7 @@ export default function HelpSupportScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.contactTitle, { color: colors.text }]}>Email Support</Text>
               <Text style={[styles.contactDesc, { color: COLORS.primary }]}>
-                Contact@frestvia.store
+                {SUPPORT_EMAIL}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
@@ -230,9 +253,7 @@ export default function HelpSupportScreen() {
               styles.contactRow,
               pressed && { opacity: 0.7, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
-            onPress={() => {
-              Linking.openURL('mailto:Contact@frestvia.store?subject=Forgetly%20Bug%20Report');
-            }}
+            onPress={() => openEmail('Forgetly Bug Report')}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
             <View style={[styles.contactIcon, { backgroundColor: COLORS.error + '15' }]}>
