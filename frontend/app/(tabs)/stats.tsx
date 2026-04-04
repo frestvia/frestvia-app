@@ -203,7 +203,7 @@ export default function StatsScreen() {
         />
         
         {/* Premium Advanced Insights */}
-        {!isPremium && (
+        {!isPremium ? (
           <TouchableOpacity
             style={[styles.premiumLockCard, { backgroundColor: colors.card }, SHADOWS.small]}
             onPress={() => router.push('/paywall')}
@@ -243,6 +243,89 @@ export default function StatsScreen() {
               <Ionicons name="chevron-forward" size={16} color={COLORS.premium} />
             </View>
           </TouchableOpacity>
+        ) : (
+          <View>
+            {/* Premium: Advanced Insights Section */}
+            <View style={[styles.premiumInsightsCard, { backgroundColor: colors.card }, SHADOWS.small]}>
+              <View style={styles.premiumInsightsHeader}>
+                <Ionicons name="diamond" size={18} color={COLORS.premium} />
+                <Text style={[styles.premiumInsightsTitle, { color: colors.text }]}>
+                  Advanced Insights
+                </Text>
+              </View>
+              
+              {/* Smart Forgetting Pattern */}
+              <View style={[styles.insightRow, { borderBottomColor: colors.border }]}>
+                <View style={[styles.insightIcon, { backgroundColor: '#6366F120' }]}>
+                  <Ionicons name="bulb" size={16} color={COLORS.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.insightLabel, { color: colors.textSecondary }]}>Most Forgotten</Text>
+                  <Text style={[styles.insightValue, { color: colors.text }]}>
+                    {stats?.most_forgotten_item || 'Keys'}
+                  </Text>
+                </View>
+                <View style={[styles.insightBadge, { backgroundColor: COLORS.error + '15' }]}>
+                  <Text style={[styles.insightBadgeText, { color: COLORS.error }]}>
+                    {stats?.items_forgotten_week || 0}x/week
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Peak Forgetting Time */}
+              <View style={[styles.insightRow, { borderBottomColor: colors.border }]}>
+                <View style={[styles.insightIcon, { backgroundColor: '#F59E0B20' }]}>
+                  <Ionicons name="time" size={16} color="#F59E0B" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.insightLabel, { color: colors.textSecondary }]}>Peak Forgetting Time</Text>
+                  <Text style={[styles.insightValue, { color: colors.text }]}>Morning (8-9 AM)</Text>
+                </View>
+                <Ionicons name="alert-circle" size={18} color="#F59E0B" />
+              </View>
+              
+              {/* Success Rate */}
+              <View style={[styles.insightRow, { borderBottomWidth: 0 }]}>
+                <View style={[styles.insightIcon, { backgroundColor: COLORS.success + '20' }]}>
+                  <Ionicons name="trending-up" size={16} color={COLORS.success} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.insightLabel, { color: colors.textSecondary }]}>Weekly Improvement</Text>
+                  <Text style={[styles.insightValue, { color: COLORS.success }]}>+12% this week</Text>
+                </View>
+                <Ionicons name="arrow-up-circle" size={18} color={COLORS.success} />
+              </View>
+            </View>
+
+            {/* Premium: Smart Suggestions */}
+            <View style={[styles.premiumInsightsCard, { backgroundColor: colors.card, marginTop: SPACING.md }, SHADOWS.small]}>
+              <View style={styles.premiumInsightsHeader}>
+                <Ionicons name="sparkles" size={18} color="#F59E0B" />
+                <Text style={[styles.premiumInsightsTitle, { color: colors.text }]}>
+                  Smart Suggestions
+                </Text>
+              </View>
+              
+              <View style={styles.suggestionItem}>
+                <View style={[styles.suggestionDot, { backgroundColor: COLORS.primary }]} />
+                <Text style={[styles.suggestionText, { color: colors.text }]}>
+                  Add "Umbrella" to your checklist — rain forecast for tomorrow
+                </Text>
+              </View>
+              <View style={styles.suggestionItem}>
+                <View style={[styles.suggestionDot, { backgroundColor: COLORS.success }]} />
+                <Text style={[styles.suggestionText, { color: colors.text }]}>
+                  You rarely forget items on weekends — keep it up!
+                </Text>
+              </View>
+              <View style={styles.suggestionItem}>
+                <View style={[styles.suggestionDot, { backgroundColor: '#F59E0B' }]} />
+                <Text style={[styles.suggestionText, { color: colors.text }]}>
+                  Consider enabling location reminders for your office
+                </Text>
+              </View>
+            </View>
+          </View>
         )}
         
         {/* Period Stats */}
@@ -519,5 +602,70 @@ const styles = StyleSheet.create({
     color: COLORS.premium,
     fontSize: FONTS.sizes.sm,
     fontWeight: '600',
+  },
+  // Premium Insights styles
+  premiumInsightsCard: {
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  premiumInsightsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: SPACING.md,
+  },
+  premiumInsightsTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '700',
+  },
+  insightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  insightIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  insightLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  insightValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  insightBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  insightBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 8,
+    gap: 10,
+  },
+  suggestionDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 5,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

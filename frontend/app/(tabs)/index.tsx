@@ -160,6 +160,16 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />
         }
       >
+        {/* Premium Badge */}
+        {isPremium && (
+          <View style={styles.premiumBadgeRow}>
+            <View style={styles.premiumBadgePill}>
+              <Ionicons name="diamond" size={14} color="#fff" />
+              <Text style={styles.premiumBadgeText}>Premium</Text>
+            </View>
+          </View>
+        )}
+
         {/* Compact Stats Row */}
         {stats && (
           <View style={styles.compactStatsRow}>
@@ -356,9 +366,13 @@ export default function HomeScreen() {
               <Text style={[styles.sharedListTitle, { color: colors.text }]}>
                 Shared Lists
               </Text>
-              {!isPremium && (
+              {!isPremium ? (
                 <View style={styles.proBadge}>
                   <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              ) : (
+                <View style={[styles.proBadge, { backgroundColor: COLORS.success }]}>
+                  <Text style={styles.proBadgeText}>UNLOCKED</Text>
                 </View>
               )}
             </View>
