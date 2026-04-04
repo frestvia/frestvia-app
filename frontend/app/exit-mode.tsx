@@ -39,6 +39,7 @@ export default function ExitModeScreen() {
   
   const [isComplete, setIsComplete] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   
   const scale = useSharedValue(1);
   const successScale = useSharedValue(0);
@@ -113,7 +114,7 @@ export default function ExitModeScreen() {
         // Perfect exit!
         successScale.value = withSpring(1);
         Vibration.vibrate([0, 100, 50, 100]);
-        speakSuccess();
+        if (voiceEnabled) speakSuccess();
         
         setTimeout(() => {
           router.back();
@@ -127,10 +128,12 @@ export default function ExitModeScreen() {
           .filter((i) => forgottenItems.includes(i.id))
           .map((i) => i.name);
         
-        if (forgottenNames.length === 1) {
-          speakReminder(forgottenNames[0]);
-        } else if (forgottenNames.length > 1) {
-          speakMultipleReminders(forgottenNames);
+        if (voiceEnabled) {
+          if (forgottenNames.length === 1) {
+            speakReminder(forgottenNames[0]);
+          } else if (forgottenNames.length > 1) {
+            speakMultipleReminders(forgottenNames);
+          }
         }
         router.back();
       }
