@@ -146,6 +146,17 @@ class StatsResponse(BaseModel):
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class VerifyResetCodeRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+class ResetPasswordRequest(BaseModel):
+    reset_token: str
+    new_password: str
+
 # ======================== SHARED LIST MODELS ========================
 
 class SharedListItemCreate(BaseModel):
@@ -321,6 +332,193 @@ async def update_profile(data: ProfileUpdate, user = Depends(get_current_user)):
         user = await db.users.find_one({"id": user["id"]})
     
     return UserResponse(**{k: v for k, v in user.items() if k != 'password'})
+
+# ======================== PASSWORD RESET ROUTES ========================
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """
+    Request password reset code.
+    Always returns success to prevent email enumeration.
+    For MVP: returns the code in response (replace with email service later).
+    """
+    email = data.email.lower()
+    
+    # Rate limit: max 3 active codes per email per hour
+    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+    recent_count = await db.password_resets.count_documents({
+        "email": email,
+        "created_at": {"$gte": one_hour_ago}
+    })
+    
+    if recent_count >= 3:
+        # Still return success to prevent enumeration, but don't create code
+        return {
+            "message": "If this email is registered, a reset code has been sent.",
+            "success": True
+        }
+    
+    # Check if user exists (but don't reveal in response)
+    user = await db.users.find_one({"email": email, "is_guest": {"$ne": True}})
+    
+    if not user:
+        # Return same success message — no email enumeration
+        return {
+            "message": "If this email is registered, a reset code has been sent.",
+            "success": True
+        }
+    
+    # Generate 6-digit code
+    code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    
+    # Invalidate all previous codes for this email
+    await db.password_resets.update_many(
+        {"email": email, "used": False},
+        {"$set": {"used": True}}
+    )
+    
+    # Store the reset code
+    reset_entry = {
+        "id": str(uuid.uuid4()),
+        "email": email,
+        "code": code,
+        "reset_token": None,
+        "attempts": 0,
+        "max_attempts": 5,
+        "used": False,
+        "expires_at": datetime.utcnow() + timedelta(minutes=15),
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.password_resets.insert_one(reset_entry)
+    
+    # TODO: Replace with actual email service integration
+    # e.g. await send_email(email, "Your reset code", f"Your code is: {code}")
+    logger.info(f"Password reset code generated for {email}: {code}")
+    
+    # For MVP: return code in response (remove in production with real email)
+    return {
+        "message": "If this email is registered, a reset code has been sent.",
+        "success": True,
+        "dev_code": code  # Remove this field when email service is integrated
+    }
+
+
+@api_router.post("/auth/verify-reset-code")
+async def verify_reset_code(data: VerifyResetCodeRequest):
+    """
+    Verify the 6-digit reset code and return a one-time reset token.
+    """
+    email = data.email.lower()
+    code = data.code.strip()
+    
+    # Find valid reset entry
+    reset_entry = await db.password_resets.find_one({
+        "email": email,
+        "used": False,
+        "expires_at": {"$gt": datetime.utcnow()}
+    })
+    
+    if not reset_entry:
+        raise HTTPException(
+            status_code=400,
+            detail="Code has expired or is invalid. Please request a new code."
+        )
+    
+    # Check brute force attempts
+    if reset_entry.get("attempts", 0) >= reset_entry.get("max_attempts", 5):
+        await db.password_resets.update_one(
+            {"id": reset_entry["id"]},
+            {"$set": {"used": True}}
+        )
+        raise HTTPException(
+            status_code=429,
+            detail="Too many attempts. Please request a new code."
+        )
+    
+    # Verify code
+    if reset_entry["code"] != code:
+        await db.password_resets.update_one(
+            {"id": reset_entry["id"]},
+            {"$inc": {"attempts": 1}}
+        )
+        remaining = reset_entry.get("max_attempts", 5) - reset_entry.get("attempts", 0) - 1
+        raise HTTPException(
+            status_code=400,
+            detail=f"Incorrect code. {remaining} attempts remaining."
+        )
+    
+    # Code is correct — generate a one-time reset token
+    reset_token = str(uuid.uuid4()) + "-" + str(uuid.uuid4())
+    
+    await db.password_resets.update_one(
+        {"id": reset_entry["id"]},
+        {
+            "$set": {
+                "reset_token": reset_token,
+                "token_expires_at": datetime.utcnow() + timedelta(minutes=5)
+            }
+        }
+    )
+    
+    return {
+        "message": "Code verified successfully.",
+        "reset_token": reset_token,
+        "success": True
+    }
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    """
+    Reset password using the verified reset token.
+    Password must be at least 8 characters with at least 1 letter and 1 number.
+    """
+    # Validate password strength
+    password = data.new_password
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+    
+    has_letter = any(c.isalpha() for c in password)
+    has_number = any(c.isdigit() for c in password)
+    if not has_letter or not has_number:
+        raise HTTPException(status_code=400, detail="Password must contain at least 1 letter and 1 number.")
+    
+    # Find the reset entry with this token
+    reset_entry = await db.password_resets.find_one({
+        "reset_token": data.reset_token,
+        "used": False,
+        "token_expires_at": {"$gt": datetime.utcnow()}
+    })
+    
+    if not reset_entry:
+        raise HTTPException(
+            status_code=400,
+            detail="Reset link has expired or is invalid. Please request a new code."
+        )
+    
+    # Update user's password
+    hashed = hash_password(password)
+    result = await db.users.update_one(
+        {"email": reset_entry["email"]},
+        {"$set": {"password": hashed}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to reset password. Please try again.")
+    
+    # Mark token as used and invalidate all codes for this email
+    await db.password_resets.update_many(
+        {"email": reset_entry["email"]},
+        {"$set": {"used": True}}
+    )
+    
+    logger.info(f"Password reset successful for {reset_entry['email']}")
+    
+    return {
+        "message": "Password reset successfully! You can now log in with your new password.",
+        "success": True
+    }
 
 # ======================== CHECKLIST HELPERS ========================
 

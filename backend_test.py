@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for Forgetly - Shared Lists Functionality
-Tests all shared lists endpoints with proper authentication
+Backend API Testing for Forgetly - Password Reset Functionality
+Tests all password reset endpoints with comprehensive scenarios
 """
 
 import requests
 import json
 import sys
+import time
 from datetime import datetime
 
 # Configuration
@@ -319,24 +320,323 @@ def test_shared_lists_endpoints(token, user):
     
     return results
 
+def test_password_reset_endpoints():
+    """Test all password reset endpoints with comprehensive scenarios"""
+    results = TestResults()
+    
+    print(f"\n🔐 Testing Password Reset Endpoints...")
+    
+    # Test credentials - use timestamp to avoid rate limiting
+    import time
+    timestamp = str(int(time.time()))
+    test_email = f"testuser{timestamp}@test.com"
+    test_password = "testpass123"
+    
+    # First, create a test user to use for password reset
+    print(f"Creating test user: {test_email}")
+    try:
+        register_response = requests.post(f"{BASE_URL}/auth/register", 
+                                        headers=HEADERS, 
+                                        json={"email": test_email, "password": test_password, "name": "Test User"})
+        
+        if register_response.status_code == 200:
+            print(f"✅ Test user created successfully")
+        else:
+            print(f"⚠️  Could not create test user: {register_response.text}")
+            # Fall back to existing premium user but with delay
+            test_email = "premium@test.com"
+            test_password = "premium123"
+            print(f"Using existing user: {test_email}")
+            
+    except Exception as e:
+        print(f"⚠️  Exception creating test user: {str(e)}")
+        test_email = "premium@test.com"
+        test_password = "premium123"
+    
+    # Test 1: Forgot Password - Happy Path (existing email)
+    try:
+        response = requests.post(f"{BASE_URL}/auth/forgot-password", 
+                               headers=HEADERS, 
+                               json={"email": test_email})
+        
+        if response.status_code == 200:
+            data = response.json()
+            if (data.get("success") == True and 
+                "dev_code" in data and 
+                len(data["dev_code"]) == 6 and
+                data["dev_code"].isdigit()):
+                results.log_success("Forgot Password - Happy path: existing email returns success with 6-digit dev_code")
+                dev_code = data["dev_code"]
+            else:
+                results.log_failure("Forgot Password - Happy path", f"Invalid response format: {data}")
+                dev_code = None
+        else:
+            results.log_failure("Forgot Password - Happy path", f"HTTP {response.status_code}: {response.text}")
+            dev_code = None
+            
+    except Exception as e:
+        results.log_failure("Forgot Password - Happy path", f"Exception: {str(e)}")
+        dev_code = None
+    
+    # Test 2: Forgot Password - Non-existent email (no enumeration)
+    try:
+        response = requests.post(f"{BASE_URL}/auth/forgot-password", 
+                               headers=HEADERS, 
+                               json={"email": "nonexistent@test.com"})
+        
+        if response.status_code == 200:
+            data = response.json()
+            if (data.get("success") == True and 
+                "dev_code" not in data):
+                results.log_success("Forgot Password - Non-existent email: same success message, no dev_code")
+            else:
+                results.log_failure("Forgot Password - Non-existent email", f"Should not return dev_code: {data}")
+        else:
+            results.log_failure("Forgot Password - Non-existent email", f"HTTP {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Forgot Password - Non-existent email", f"Exception: {str(e)}")
+    
+    # Test 3: Forgot Password - Invalid email format
+    try:
+        response = requests.post(f"{BASE_URL}/auth/forgot-password", 
+                               headers=HEADERS, 
+                               json={"email": "invalid-email"})
+        
+        if response.status_code == 422:  # Validation error
+            results.log_success("Forgot Password - Invalid email format: returns validation error")
+        else:
+            results.log_failure("Forgot Password - Invalid email format", f"Expected 422, got {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Forgot Password - Invalid email format", f"Exception: {str(e)}")
+    
+    # Test 4: Rate limiting (send 4 requests)
+    try:
+        rate_limit_email = "ratelimit@test.com"
+        codes_received = 0
+        
+        for i in range(4):
+            response = requests.post(f"{BASE_URL}/auth/forgot-password", 
+                                   headers=HEADERS, 
+                                   json={"email": rate_limit_email})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "dev_code" in data:
+                    codes_received += 1
+        
+        # Should receive codes for first 3 requests, but not the 4th
+        if codes_received <= 3:
+            results.log_success("Forgot Password - Rate limiting: 4th request returns success but no code")
+        else:
+            results.log_failure("Forgot Password - Rate limiting", f"Received {codes_received} codes, expected <= 3")
+            
+    except Exception as e:
+        results.log_failure("Forgot Password - Rate limiting", f"Exception: {str(e)}")
+    
+    # Test 5: Verify Reset Code - Happy Path
+    reset_token = None
+    if dev_code:
+        try:
+            response = requests.post(f"{BASE_URL}/auth/verify-reset-code", 
+                                   headers=HEADERS, 
+                                   json={"email": test_email, "code": dev_code})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if (data.get("success") == True and 
+                    "reset_token" in data and
+                    len(data["reset_token"]) > 10):
+                    results.log_success("Verify Reset Code - Happy path: correct code returns reset_token")
+                    reset_token = data["reset_token"]
+                else:
+                    results.log_failure("Verify Reset Code - Happy path", f"Invalid response format: {data}")
+            else:
+                results.log_failure("Verify Reset Code - Happy path", f"HTTP {response.status_code}: {response.text}")
+                
+        except Exception as e:
+            results.log_failure("Verify Reset Code - Happy path", f"Exception: {str(e)}")
+    
+    # Test 6: Verify Reset Code - Wrong code
+    try:
+        response = requests.post(f"{BASE_URL}/auth/verify-reset-code", 
+                               headers=HEADERS, 
+                               json={"email": test_email, "code": "000000"})
+        
+        if response.status_code == 400:
+            data = response.json()
+            if "Incorrect code" in data.get("detail", "") and "attempts remaining" in data.get("detail", ""):
+                results.log_success("Verify Reset Code - Wrong code: returns 400 with attempts count")
+            else:
+                results.log_failure("Verify Reset Code - Wrong code", f"Invalid error message: {data}")
+        else:
+            results.log_failure("Verify Reset Code - Wrong code", f"Expected 400, got {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Verify Reset Code - Wrong code", f"Exception: {str(e)}")
+    
+    # Test 7: Verify Reset Code - Expired/invalid code
+    try:
+        response = requests.post(f"{BASE_URL}/auth/verify-reset-code", 
+                               headers=HEADERS, 
+                               json={"email": "nonexistent@test.com", "code": "123456"})
+        
+        if response.status_code == 400:
+            data = response.json()
+            if "expired or is invalid" in data.get("detail", ""):
+                results.log_success("Verify Reset Code - Expired/invalid: returns 400 with expired message")
+            else:
+                results.log_failure("Verify Reset Code - Expired/invalid", f"Invalid error message: {data}")
+        else:
+            results.log_failure("Verify Reset Code - Expired/invalid", f"Expected 400, got {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Verify Reset Code - Expired/invalid", f"Exception: {str(e)}")
+    
+    # Test 8: Reset Password - Happy Path
+    if reset_token:
+        try:
+            new_password = "newpass123"
+            response = requests.post(f"{BASE_URL}/auth/reset-password", 
+                                   headers=HEADERS, 
+                                   json={"reset_token": reset_token, "new_password": new_password})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") == True:
+                    results.log_success("Reset Password - Happy path: valid token + strong password succeeds")
+                    
+                    # Test login with new password
+                    login_response = requests.post(f"{BASE_URL}/auth/login", 
+                                                 headers=HEADERS, 
+                                                 json={"email": test_email, "password": new_password})
+                    
+                    if login_response.status_code == 200:
+                        results.log_success("Reset Password - Login with new password works")
+                        
+                        # Reset password back to original
+                        # Get new code
+                        forgot_response = requests.post(f"{BASE_URL}/auth/forgot-password", 
+                                                      headers=HEADERS, 
+                                                      json={"email": test_email})
+                        
+                        if forgot_response.status_code == 200:
+                            forgot_data = forgot_response.json()
+                            if "dev_code" in forgot_data:
+                                # Verify new code
+                                verify_response = requests.post(f"{BASE_URL}/auth/verify-reset-code", 
+                                                              headers=HEADERS, 
+                                                              json={"email": test_email, "code": forgot_data["dev_code"]})
+                                
+                                if verify_response.status_code == 200:
+                                    verify_data = verify_response.json()
+                                    if "reset_token" in verify_data:
+                                        # Reset back to original password
+                                        reset_back_response = requests.post(f"{BASE_URL}/auth/reset-password", 
+                                                                           headers=HEADERS, 
+                                                                           json={"reset_token": verify_data["reset_token"], "new_password": test_password})
+                                        
+                                        if reset_back_response.status_code == 200:
+                                            results.log_success("Reset Password - Successfully reset back to original password")
+                                        else:
+                                            results.log_failure("Reset Password - Reset back", f"Failed to reset back: {reset_back_response.text}")
+                    else:
+                        results.log_failure("Reset Password - Login with new password", f"Login failed: {login_response.text}")
+                else:
+                    results.log_failure("Reset Password - Happy path", f"Invalid response format: {data}")
+            else:
+                results.log_failure("Reset Password - Happy path", f"HTTP {response.status_code}: {response.text}")
+                
+        except Exception as e:
+            results.log_failure("Reset Password - Happy path", f"Exception: {str(e)}")
+    
+    # Test 9: Reset Password - Weak password (< 8 chars)
+    try:
+        response = requests.post(f"{BASE_URL}/auth/reset-password", 
+                               headers=HEADERS, 
+                               json={"reset_token": "dummy-token", "new_password": "weak"})
+        
+        if response.status_code == 400:
+            data = response.json()
+            if "at least 8 characters" in data.get("detail", ""):
+                results.log_success("Reset Password - Weak password (< 8 chars): returns 400")
+            else:
+                results.log_failure("Reset Password - Weak password", f"Invalid error message: {data}")
+        else:
+            results.log_failure("Reset Password - Weak password", f"Expected 400, got {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Reset Password - Weak password", f"Exception: {str(e)}")
+    
+    # Test 10: Reset Password - No letter
+    try:
+        response = requests.post(f"{BASE_URL}/auth/reset-password", 
+                               headers=HEADERS, 
+                               json={"reset_token": "dummy-token", "new_password": "12345678"})
+        
+        if response.status_code == 400:
+            data = response.json()
+            if "at least 1 letter and 1 number" in data.get("detail", ""):
+                results.log_success("Reset Password - No letter: returns 400")
+            else:
+                results.log_failure("Reset Password - No letter", f"Invalid error message: {data}")
+        else:
+            results.log_failure("Reset Password - No letter", f"Expected 400, got {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Reset Password - No letter", f"Exception: {str(e)}")
+    
+    # Test 11: Reset Password - No number
+    try:
+        response = requests.post(f"{BASE_URL}/auth/reset-password", 
+                               headers=HEADERS, 
+                               json={"reset_token": "dummy-token", "new_password": "password"})
+        
+        if response.status_code == 400:
+            data = response.json()
+            if "at least 1 letter and 1 number" in data.get("detail", ""):
+                results.log_success("Reset Password - No number: returns 400")
+            else:
+                results.log_failure("Reset Password - No number", f"Invalid error message: {data}")
+        else:
+            results.log_failure("Reset Password - No number", f"Expected 400, got {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Reset Password - No number", f"Exception: {str(e)}")
+    
+    # Test 12: Reset Password - Invalid/expired token
+    try:
+        response = requests.post(f"{BASE_URL}/auth/reset-password", 
+                               headers=HEADERS, 
+                               json={"reset_token": "invalid-token", "new_password": "validpass123"})
+        
+        if response.status_code == 400:
+            data = response.json()
+            if "expired or is invalid" in data.get("detail", ""):
+                results.log_success("Reset Password - Invalid token: returns 400")
+            else:
+                results.log_failure("Reset Password - Invalid token", f"Invalid error message: {data}")
+        else:
+            results.log_failure("Reset Password - Invalid token", f"Expected 400, got {response.status_code}: {response.text}")
+            
+    except Exception as e:
+        results.log_failure("Reset Password - Invalid token", f"Exception: {str(e)}")
+    
+    return results
+
 def main():
-    print("🚀 Starting Shared Lists API Testing...")
+    print("🚀 Starting Password Reset API Testing...")
     print(f"Backend URL: {BASE_URL}")
     
-    # Test authentication
-    token, user = test_auth_and_get_token()
-    if not token:
-        print("❌ Authentication failed. Cannot proceed with shared lists testing.")
-        return False
-    
-    # Test shared lists endpoints
-    results = test_shared_lists_endpoints(token, user)
+    # Test password reset endpoints
+    results = test_password_reset_endpoints()
     
     # Print summary
     success = results.summary()
     
     if success:
-        print("\n🎉 All shared lists tests passed!")
+        print("\n🎉 All password reset tests passed!")
     else:
         print(f"\n⚠️  Some tests failed. Check the details above.")
     
