@@ -337,16 +337,29 @@ export default function HomeScreen() {
             borderColor: cardBorder,
             borderWidth: isDark ? 1 : 0,
           }, !isDark && SHADOWS.small]}
-          onPress={() => router.push('/shared-lists')}
+          onPress={() => {
+            if (!user?.is_premium && user?.is_guest) {
+              router.push('/paywall');
+            } else {
+              router.push('/shared-lists');
+            }
+          }}
           activeOpacity={0.7}
         >
           <View style={[styles.sharedListIcon, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : COLORS.success + '15' }]}>
             <Ionicons name="people" size={20} color={COLORS.success} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.sharedListTitle, { color: colors.text }]}>
-              Shared Lists
-            </Text>
+            <View style={styles.featureTitleRow}>
+              <Text style={[styles.sharedListTitle, { color: colors.text }]}>
+                Shared Lists
+              </Text>
+              {!user?.is_premium && (
+                <View style={styles.proBadge}>
+                  <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              )}
+            </View>
             <Text style={[styles.sharedListSub, { color: colors.textSecondary }]}>
               Share checklists with family & friends
             </Text>
@@ -373,9 +386,16 @@ export default function HomeScreen() {
             <Ionicons name="location" size={20} color={COLORS.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.sharedListTitle, { color: colors.text }]}>
-              {t('home.myLocations')}
-            </Text>
+            <View style={styles.featureTitleRow}>
+              <Text style={[styles.sharedListTitle, { color: colors.text }]}>
+                {t('home.myLocations')}
+              </Text>
+              {!user?.is_premium && (
+                <Text style={[styles.limitText, { color: colors.textSecondary }]}>
+                  {locations.length}/2 free
+                </Text>
+              )}
+            </View>
             <Text style={[styles.sharedListSub, { color: colors.textSecondary }]}>
               Location-based reminders
             </Text>
@@ -407,7 +427,7 @@ export default function HomeScreen() {
         )}
 
         {/* Premium Promo Card */}
-        {!user?.is_premium && !promoDismissed && (
+        {(!user?.is_premium || user?.is_guest) && !promoDismissed && (
           <View style={[styles.promoCard, isDark && { borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)' }]}>
             <LinearGradient
               colors={isDark ? ['rgba(99, 102, 241, 0.2)', 'rgba(139, 92, 246, 0.15)'] : ['#6366F1', '#8B5CF6', '#A855F7']}
@@ -661,6 +681,27 @@ const styles = StyleSheet.create({
   sharedListSub: {
     fontSize: 12,
     marginTop: 2,
+  },
+  featureTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  proBadge: {
+    backgroundColor: COLORS.premium,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  proBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  limitText: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   sharedBadge: {
     backgroundColor: COLORS.success,

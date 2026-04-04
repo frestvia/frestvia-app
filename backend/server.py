@@ -304,6 +304,10 @@ async def guest_login():
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(user = Depends(get_current_user)):
+    # Guest users are always free - reset premium if accidentally set
+    if user.get("is_guest", False) and user.get("is_premium", False):
+        await db.users.update_one({"id": user["id"]}, {"$set": {"is_premium": False}})
+        user["is_premium"] = False
     return UserResponse(**{k: v for k, v in user.items() if k != 'password'})
 
 @api_router.put("/auth/profile", response_model=UserResponse)

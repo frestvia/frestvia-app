@@ -136,7 +136,7 @@ export default function ProfileScreen() {
         </View>
         
         {/* Premium Card */}
-        {user?.is_premium ? (
+        {user?.is_premium && !user?.is_guest ? (
           <View style={[styles.premiumActiveCard, SHADOWS.medium]}>
             <View style={styles.premiumContent}>
               <Ionicons name="diamond" size={32} color="#fff" />
@@ -151,20 +151,26 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <TouchableOpacity
-            style={[styles.premiumCard, SHADOWS.medium]}
+            style={[styles.upgradeBanner, SHADOWS.medium]}
             onPress={() => router.push('/paywall')}
             activeOpacity={0.9}
           >
-            <View style={styles.premiumContent}>
-              <Ionicons name="diamond" size={32} color="#fff" />
-              <View style={styles.premiumText}>
-                <Text style={styles.premiumTitle}>{t('premium.title')}</Text>
-                <Text style={styles.premiumSubtitle}>
-                  {t('premium.subtitle')}
-                </Text>
+            <View style={styles.upgradeBannerInner}>
+              <View style={styles.upgradeLeft}>
+                <View style={styles.upgradeIconWrap}>
+                  <Ionicons name="lock-closed" size={20} color="#fff" />
+                </View>
+                <View style={styles.upgradeTextWrap}>
+                  <Text style={styles.upgradeTitle}>Upgrade to Premium</Text>
+                  <Text style={styles.upgradeSubtitle}>
+                    Unlock unlimited locations, smart reminders & more
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.upgradeArrow}>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#fff" />
           </TouchableOpacity>
         )}
         
@@ -385,15 +391,6 @@ const styles = StyleSheet.create({
     width: 1,
     marginVertical: SPACING.xs,
   },
-  premiumCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.premium,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
   premiumActiveCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -421,6 +418,56 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     fontSize: FONTS.sizes.xs,
     marginTop: 2,
+  },
+  upgradeBanner: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: SPACING.lg,
+    backgroundColor: '#7C3AED',
+  },
+  upgradeBannerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+  upgradeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  upgradeIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  upgradeTextWrap: {
+    flex: 1,
+  },
+  upgradeTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  upgradeSubtitle: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    marginTop: 3,
+    lineHeight: 16,
+  },
+  upgradeArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   menuCard: {
     borderRadius: RADIUS.md,
