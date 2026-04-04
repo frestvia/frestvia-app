@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   Alert,
   TextInput,
   Modal,
@@ -34,22 +35,17 @@ export default function ProfileScreen() {
   const [editName, setEditName] = useState(user?.name || '');
   const [loading, setLoading] = useState(false);
   
-  const handleLogout = () => {
-    Alert.alert(
-      t('auth.logout'),
-      t('auth.logoutConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('auth.logout'),
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/login');
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    console.log('[Logout] Starting logout...');
+    try {
+      await logout();
+      console.log('[Logout] Auth state cleared');
+    } catch (e) {
+      console.error('[Logout] Error:', e);
+    }
+    // Navigate directly to login screen
+    console.log('[Logout] Navigating to login...');
+    router.replace('/(auth)/login');
   };
   
   const handleUpdateProfile = async () => {
@@ -247,13 +243,18 @@ export default function ProfileScreen() {
         </View>
         
         {/* Logout Button */}
-        <Button
-          title={t('auth.logout')}
+        <Pressable
+          style={({ pressed }) => [
+            styles.logoutBtn,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={handleLogout}
-          variant="danger"
-          style={styles.logoutBtn}
-          icon={<Ionicons name="log-out" size={20} color="#fff" />}
-        />
+          accessibilityRole="button"
+          accessibilityLabel="Logout"
+        >
+          <Ionicons name="log-out-outline" size={20} color="#fff" />
+          <Text style={styles.logoutBtnText}>{t('auth.logout')}</Text>
+        </Pressable>
         
         {/* Version */}
         <Text style={[styles.version, { color: colors.textSecondary }]}>
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: 160,
   },
   profileHeader: {
     alignItems: 'center',
@@ -501,7 +502,22 @@ const styles = StyleSheet.create({
     marginLeft: 64,
   },
   logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.error,
+    borderRadius: 14,
+    paddingVertical: 16,
     marginBottom: SPACING.md,
+    gap: 10,
+  },
+  logoutBtnConfirm: {
+    backgroundColor: '#DC2626',
+  },
+  logoutBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
   },
   version: {
     textAlign: 'center',

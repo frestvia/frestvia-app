@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, I18nManager } from 'react-native';
 import { useAuthStore } from '../src/store/authStore';
@@ -9,8 +9,10 @@ import '../src/i18n';
 
 export default function RootLayout() {
   const { isDark, colors } = useTheme();
-  const { loadToken, isLoading: authLoading } = useAuthStore();
+  const { loadToken, isLoading: authLoading, isAuthenticated } = useAuthStore();
   const { loadSettings, isLoading: settingsLoading, isRTL } = useSettingsStore();
+  const router = useRouter();
+  const segments = useSegments();
   
   useEffect(() => {
     const init = async () => {
@@ -19,6 +21,22 @@ export default function RootLayout() {
     };
     init();
   }, []);
+  
+  // Auth guard: auto-redirect on auth state change
+  useEffect(() => {
+    if (authLoading || settingsLoading) return;
+    
+    const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
+    
+    if (!isAuthenticated && inTabsGroup) {
+      // User logged out while in app — redirect to login
+      router.replace('/(auth)/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      // User logged in while on auth screen — redirect to app
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, authLoading, settingsLoading, segments]);
   
   // Handle RTL layout
   useEffect(() => {
