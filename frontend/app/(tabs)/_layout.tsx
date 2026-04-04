@@ -14,17 +14,26 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-          paddingTop: 8,
+          backgroundColor: isDark ? '#0D1118' : colors.card,
+          borderTopColor: isDark ? '#1A2035' : colors.border,
+          borderTopWidth: isDark ? 0.5 : 1,
+          height: Platform.OS === 'ios' ? 88 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingTop: 10,
+          ...(isDark ? {
+            shadowColor: '#6366F1',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            elevation: 8,
+          } : {}),
         },
         tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarInactiveTintColor: isDark ? '#4B5578' : colors.textSecondary,
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+          fontSize: 11,
+          fontWeight: '600',
+          letterSpacing: 0.2,
         },
       }}
     >
@@ -49,7 +58,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="stats"
         options={{
-          title: t('stats.title'),
+          title: t('stats.shortTitle') || 'Insights',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="stats-chart" size={size} color={color} />
           ),
@@ -58,7 +67,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: t('history.title'),
+          title: t('history.shortTitle') || 'History',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time" size={size} color={color} />
           ),

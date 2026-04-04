@@ -7,6 +7,8 @@ import {
   ScrollView,
   RefreshControl,
   Alert,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,7 +20,10 @@ import Animated, {
   withSpring,
   withRepeat,
   withTiming,
+  withSequence,
   Easing,
+  interpolate,
+  useAnimatedProps,
 } from 'react-native-reanimated';
 import { useAuthStore } from '../../src/store/authStore';
 import { useChecklistStore, Checklist } from '../../src/store/checklistStore';
@@ -27,8 +32,20 @@ import { useLocationStore } from '../../src/store/locationStore';
 import { useSharedListStore } from '../../src/store/sharedListStore';
 import { useLocation } from '../../src/hooks/useLocation';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
-import { StatCard } from '../../src/components/StatCard';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BUTTON_SIZE = 160;
+const PULSE_SIZE = 200;
+
+// Glass card colors for dark theme
+const GLASS = {
+  bg: 'rgba(22, 27, 48, 0.75)',
+  bgLight: 'rgba(255, 255, 255, 0.04)',
+  border: 'rgba(99, 102, 241, 0.15)',
+  borderSubtle: 'rgba(255, 255, 255, 0.06)',
+  highlight: 'rgba(99, 102, 241, 0.08)',
+};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -47,19 +64,30 @@ export default function HomeScreen() {
   const [promoDismissed, setPromoDismissed] = useState(false);
   
   const buttonScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.3);
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.4);
+  const glowOpacity = useSharedValue(0.3);
   
   useEffect(() => {
     fetchChecklists();
     fetchStats();
     fetchLocations();
     fetchSharedLists();
-    
-    // Try to get current position for location awareness
     getCurrentPosition().catch(() => {});
     
+    // Pulse animation for the main CTA
+    pulseScale.value = withRepeat(
+      withTiming(1.15, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
     pulseOpacity.value = withRepeat(
-      withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+    glowOpacity.value = withRepeat(
+      withTiming(0.6, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );
@@ -73,7 +101,7 @@ export default function HomeScreen() {
   
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchChecklists(), fetchStats()]);
+    await Promise.all([fetchChecklists(), fetchStats(), fetchLocations(), fetchSharedLists()]);
     setRefreshing(false);
   }, []);
   
@@ -90,16 +118,21 @@ export default function HomeScreen() {
     transform: [{ scale: buttonScale.value }],
   }));
   
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
+  const pulseRingStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
     opacity: pulseOpacity.value,
   }));
   
+  const outerGlowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+  
   const handleButtonPressIn = () => {
-    buttonScale.value = withSpring(0.95);
+    buttonScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
   };
   
   const handleButtonPressOut = () => {
-    buttonScale.value = withSpring(1);
+    buttonScale.value = withSpring(1, { damping: 12, stiffness: 200 });
   };
   
   const getChecklistIcon = (type: string) => {
@@ -110,6 +143,11 @@ export default function HomeScreen() {
       default: return 'list';
     }
   };
+
+  // Use glass styling for dark, clean cards for light
+  const cardBg = isDark ? GLASS.bg : colors.card;
+  const cardBorder = isDark ? GLASS.border : colors.border;
+  const subtleBorder = isDark ? GLASS.borderSubtle : colors.border;
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -120,190 +158,137 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-              {t('auth.welcomeBack')}
-            </Text>
-            <Text style={[styles.name, { color: colors.text }]}>
-              {user?.name || t('auth.guestUser')}
-            </Text>
-            {user?.is_premium && (
-              <View style={styles.premiumBadgeHome}>
-                <Text style={styles.premiumBadgeText}>👑 Premium</Text>
+        {/* Compact Stats Row */}
+        {stats && (
+          <View style={styles.compactStatsRow}>
+            <View style={[styles.miniStatCard, { 
+              backgroundColor: cardBg, 
+              borderColor: subtleBorder,
+              borderWidth: isDark ? 1 : 0,
+            }, !isDark && SHADOWS.small]}>
+              <View style={[styles.miniStatIconWrap, { backgroundColor: COLORS.success + '18' }]}>
+                <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+              </View>
+              <View>
+                <Text style={[styles.miniStatValue, { color: colors.text }]}>
+                  {stats.items_saved_today || 0}
+                </Text>
+                <Text style={[styles.miniStatLabel, { color: colors.textSecondary }]}>
+                  {t('home.itemsSaved')}
+                </Text>
+              </View>
+            </View>
+            
+            <View style={[styles.miniStatCard, { 
+              backgroundColor: cardBg, 
+              borderColor: subtleBorder,
+              borderWidth: isDark ? 1 : 0,
+            }, !isDark && SHADOWS.small]}>
+              <View style={[styles.miniStatIconWrap, { backgroundColor: COLORS.error + '18' }]}>
+                <Ionicons name="alert-circle" size={18} color={COLORS.error} />
+              </View>
+              <View>
+                <Text style={[styles.miniStatValue, { color: colors.text }]}>
+                  {stats.items_forgotten_today || 0}
+                </Text>
+                <Text style={[styles.miniStatLabel, { color: colors.textSecondary }]}>
+                  {t('home.forgotten')}
+                </Text>
+              </View>
+            </View>
+
+            {stats.current_streak > 0 && (
+              <View style={[styles.miniStatCard, { 
+                backgroundColor: cardBg, 
+                borderColor: COLORS.streak + '30',
+                borderWidth: isDark ? 1 : 0,
+              }, !isDark && SHADOWS.small]}>
+                <View style={[styles.miniStatIconWrap, { backgroundColor: COLORS.streak + '18' }]}>
+                  <Ionicons name="flame" size={18} color={COLORS.streak} />
+                </View>
+                <View>
+                  <Text style={[styles.miniStatValue, { color: COLORS.streak }]}>
+                    {stats.current_streak}
+                  </Text>
+                  <Text style={[styles.miniStatLabel, { color: colors.textSecondary }]}>
+                    Streak
+                  </Text>
+                </View>
               </View>
             )}
           </View>
-          {stats && stats.current_streak > 0 && (
-            <View style={styles.streakBadge}>
-              <Ionicons name="flame" size={20} color={COLORS.streak} />
-              <Text style={styles.streakText}>{stats.current_streak}</Text>
-            </View>
-          )}
-        </View>
-        
-        {/* Stats Cards */}
-        <View style={styles.statsRow}>
-          <StatCard
-            title={t('home.itemsSaved')}
-            value={stats?.items_saved_today || 0}
-            icon="checkmark-circle"
-            color={COLORS.success}
-            subtitle={t('common.today')}
-          />
-          <View style={{ width: SPACING.md }} />
-          <StatCard
-            title={t('home.forgotten')}
-            value={stats?.items_forgotten_today || 0}
-            icon="alert-circle"
-            color={COLORS.error}
-            subtitle={t('common.today')}
-          />
-        </View>
-        
-        {/* Risk Score */}
-        {stats && (
-          <View style={[
-            styles.riskCard,
-            { backgroundColor: colors.card },
-            SHADOWS.small,
-          ]}>
-            <View style={styles.riskHeader}>
-              <Text style={[styles.riskTitle, { color: colors.text }]}>
-                {t('home.riskScore')}
-              </Text>
-              <Text style={[
-                styles.riskValue,
-                {
-                  color: stats.risk_score > 60
-                    ? COLORS.error
-                    : stats.risk_score > 30
-                    ? COLORS.warning
-                    : COLORS.success,
-                },
-              ]}>
-                {stats.risk_score}%
-              </Text>
-            </View>
-            <View style={[styles.riskBar, { backgroundColor: colors.border }]}>
-              <View
-                style={[
-                  styles.riskFill,
-                  {
-                    width: `${stats.risk_score}%`,
-                    backgroundColor: stats.risk_score > 60
-                      ? COLORS.error
-                      : stats.risk_score > 30
-                      ? COLORS.warning
-                      : COLORS.success,
-                  },
-                ]}
-              />
-            </View>
-            <Text style={[styles.riskMessage, { color: colors.textSecondary }]}>
-              {stats.risk_score > 60
-                ? t('home.highRisk')
-                : stats.risk_score > 30
-                ? t('home.moderateRisk')
-                : t('home.lowRisk')}
-            </Text>
-          </View>
         )}
-        
-        {/* Nearby Location Alert */}
-        {nearbyLocation && (
-          <View style={[
-            styles.nearbyCard,
-            { backgroundColor: COLORS.success + '15' },
-          ]}>
-            <Ionicons name="location" size={20} color={COLORS.success} />
-            <View style={styles.nearbyInfo}>
-              <Text style={[styles.nearbyLabel, { color: COLORS.success }]}>
-                {t('home.nearLocation')}
-              </Text>
-              <Text style={[styles.nearbyName, { color: colors.text }]}>
-                {nearbyLocation.name}
-              </Text>
-            </View>
-            <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
-          </View>
-        )}
-        
-        {/* Locations Quick Access */}
-        <TouchableOpacity
-          style={[styles.locationsBtn, { backgroundColor: colors.card }, SHADOWS.small]}
-          onPress={() => router.push('/locations')}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.locationsBtnIcon, { backgroundColor: COLORS.primary + '15' }]}>
-            <Ionicons name="location" size={18} color={COLORS.primary} />
-          </View>
-          <Text style={[styles.locationsBtnText, { color: colors.text }]}>
-            {t('home.myLocations')}
-          </Text>
-          <View style={styles.locationsBtnBadge}>
-            <Text style={styles.locationsBtnBadgeText}>{locations.length}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
-        
-        {/* Checklist Selector */}
+
+        {/* Section: Select Checklist */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
           {t('home.selectChecklist')}
         </Text>
+        
+        {/* Checklist Tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.checklistScroll}
-          contentContainerStyle={styles.checklistScrollContent}
+          style={styles.tabsScroll}
+          contentContainerStyle={styles.tabsContent}
         >
-          {checklists.map((checklist) => (
-            <TouchableOpacity
-              key={checklist.id}
-              style={[
-                styles.checklistChip,
-                {
-                  backgroundColor: selectedChecklist?.id === checklist.id
-                    ? COLORS.primary
-                    : colors.card,
-                  borderColor: selectedChecklist?.id === checklist.id
-                    ? COLORS.primary
-                    : colors.border,
-                },
-              ]}
-              onPress={() => setSelectedChecklist(checklist)}
-            >
-              <Ionicons
-                name={getChecklistIcon(checklist.type) as any}
-                size={16}
-                color={selectedChecklist?.id === checklist.id ? '#fff' : colors.text}
-              />
-              <Text
-                style={[
-                  styles.checklistChipText,
-                  {
-                    color: selectedChecklist?.id === checklist.id ? '#fff' : colors.text,
-                  },
-                ]}
+          {checklists.map((checklist) => {
+            const isActive = selectedChecklist?.id === checklist.id;
+            return (
+              <TouchableOpacity
+                key={checklist.id}
+                onPress={() => setSelectedChecklist(checklist)}
+                activeOpacity={0.8}
+                style={styles.tabWrapper}
               >
-                {checklist.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                {isActive ? (
+                  <LinearGradient
+                    colors={['#6366F1', '#8B5CF6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.tabPill, styles.tabPillActive]}
+                  >
+                    <Ionicons
+                      name={getChecklistIcon(checklist.type) as any}
+                      size={15}
+                      color="#fff"
+                    />
+                    <Text style={styles.tabTextActive}>{checklist.name}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={[styles.tabPill, styles.tabPillInactive, {
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : colors.border,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : colors.card,
+                  }]}>
+                    <Ionicons
+                      name={getChecklistIcon(checklist.type) as any}
+                      size={15}
+                      color={isDark ? 'rgba(255,255,255,0.6)' : colors.textSecondary}
+                    />
+                    <Text style={[styles.tabTextInactive, { 
+                      color: isDark ? 'rgba(255,255,255,0.6)' : colors.textSecondary 
+                    }]}>
+                      {checklist.name}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
         
-        {/* Selected Checklist Preview */}
+        {/* Checklist Preview Card (Glass) */}
         {selectedChecklist && (
-          <View style={[
-            styles.previewCard,
-            { backgroundColor: colors.card },
-            SHADOWS.small,
-          ]}>
-            <Text style={[styles.previewTitle, { color: colors.text }]}>
-              {selectedChecklist.name}
-            </Text>
-            <Text style={[styles.previewItems, { color: colors.textSecondary }]} numberOfLines={3}>
+          <View style={[styles.glassCard, {
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+            borderWidth: isDark ? 1 : 0,
+          }, !isDark && SHADOWS.small]}>
+            <View style={styles.previewHeader}>
+              <Text style={[styles.previewTitle, { color: colors.text }]}>
+                {selectedChecklist.name}
+              </Text>
+            </View>
+            <Text style={[styles.previewItems, { color: colors.textSecondary }]} numberOfLines={2}>
               {selectedChecklist.items.map(i => i.name).join(' · ')}
             </Text>
             <Text style={[styles.previewCount, { color: COLORS.primary }]}>
@@ -312,54 +297,125 @@ export default function HomeScreen() {
           </View>
         )}
         
-        {/* Main Exit Button */}
-        <View style={styles.exitButtonContainer}>
-          <Animated.View style={[styles.pulseRing, pulseAnimatedStyle]} />
+        {/* Main CTA: I'M LEAVING Button */}
+        <View style={styles.ctaContainer}>
+          {/* Outer glow ring */}
+          <Animated.View style={[styles.outerGlow, outerGlowStyle]} />
+          
+          {/* Pulse ring */}
+          <Animated.View style={[styles.pulseRing, pulseRingStyle]}>
+            <LinearGradient
+              colors={['rgba(99, 102, 241, 0.3)', 'rgba(139, 92, 246, 0.1)']}
+              style={styles.pulseGradient}
+            />
+          </Animated.View>
+          
+          {/* Main Button */}
           <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
-              style={styles.exitButton}
               onPress={handleExitMode}
               onPressIn={handleButtonPressIn}
               onPressOut={handleButtonPressOut}
               activeOpacity={1}
+              style={styles.ctaButtonOuter}
             >
-              <Ionicons name="exit" size={40} color="#fff" />
-              <Text style={styles.exitButtonText}>{t('home.imLeaving')}</Text>
-              <Text style={styles.exitButtonSubtext}>{t('home.tapToCheck')}</Text>
+              <LinearGradient
+                colors={['#7C3AED', '#6366F1', '#818CF8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.ctaButton}
+              >
+                <View style={styles.ctaInnerShadow}>
+                  <Ionicons name="exit-outline" size={36} color="#fff" />
+                  <Text style={styles.ctaText}>{t('home.imLeaving')}</Text>
+                  <Text style={styles.ctaSubtext}>{t('home.tapToCheck')}</Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
         </View>
 
-        {/* Shared Lists Quick Access */}
+        {/* Shared Lists Card (Glass) */}
         <TouchableOpacity
-          style={[styles.sharedListsBtn, { backgroundColor: colors.card }, SHADOWS.small]}
+          style={[styles.glassCard, styles.sharedListCard, {
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+            borderWidth: isDark ? 1 : 0,
+          }, !isDark && SHADOWS.small]}
           onPress={() => router.push('/shared-lists')}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
         >
-          <View style={[styles.sharedListsIcon, { backgroundColor: COLORS.success + '15' }]}>
-            <Ionicons name="people" size={18} color={COLORS.success} />
+          <View style={[styles.sharedListIcon, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : COLORS.success + '15' }]}>
+            <Ionicons name="people" size={20} color={COLORS.success} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.sharedListsTitle, { color: colors.text }]}>
+            <Text style={[styles.sharedListTitle, { color: colors.text }]}>
               Shared Lists
             </Text>
-            <Text style={[styles.sharedListsSubtitle, { color: colors.textSecondary }]}>
+            <Text style={[styles.sharedListSub, { color: colors.textSecondary }]}>
               Share checklists with family & friends
             </Text>
           </View>
           {sharedLists.length > 0 && (
-            <View style={[styles.locationsBtnBadge, { backgroundColor: COLORS.success }]}>
-              <Text style={styles.locationsBtnBadgeText}>{sharedLists.length}</Text>
+            <View style={styles.sharedBadge}>
+              <Text style={styles.sharedBadgeText}>{sharedLists.length}</Text>
             </View>
           )}
-          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={18} color={isDark ? 'rgba(255,255,255,0.3)' : colors.textSecondary} />
         </TouchableOpacity>
+
+        {/* Locations Quick Access */}
+        <TouchableOpacity
+          style={[styles.glassCard, styles.sharedListCard, {
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+            borderWidth: isDark ? 1 : 0,
+          }, !isDark && SHADOWS.small]}
+          onPress={() => router.push('/locations')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.sharedListIcon, { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : COLORS.primary + '15' }]}>
+            <Ionicons name="location" size={20} color={COLORS.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.sharedListTitle, { color: colors.text }]}>
+              {t('home.myLocations')}
+            </Text>
+            <Text style={[styles.sharedListSub, { color: colors.textSecondary }]}>
+              Location-based reminders
+            </Text>
+          </View>
+          <View style={[styles.sharedBadge, { backgroundColor: COLORS.primary }]}>
+            <Text style={styles.sharedBadgeText}>{locations.length}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={isDark ? 'rgba(255,255,255,0.3)' : colors.textSecondary} />
+        </TouchableOpacity>
+
+        {/* Nearby Location Alert */}
+        {nearbyLocation && (
+          <View style={[styles.nearbyCard, {
+            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : COLORS.success + '10',
+            borderColor: isDark ? 'rgba(16, 185, 129, 0.2)' : COLORS.success + '30',
+            borderWidth: 1,
+          }]}>
+            <Ionicons name="location" size={18} color={COLORS.success} />
+            <View style={styles.nearbyInfo}>
+              <Text style={[styles.nearbyLabel, { color: COLORS.success }]}>
+                {t('home.nearLocation')}
+              </Text>
+              <Text style={[styles.nearbyName, { color: colors.text }]}>
+                {nearbyLocation.name}
+              </Text>
+            </View>
+            <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+          </View>
+        )}
 
         {/* Premium Promo Card */}
         {!user?.is_premium && !promoDismissed && (
-          <View style={[styles.promoCard, SHADOWS.medium]}>
+          <View style={[styles.promoCard, isDark && { borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)' }]}>
             <LinearGradient
-              colors={['#6366F1', '#8B5CF6', '#A855F7']}
+              colors={isDark ? ['rgba(99, 102, 241, 0.2)', 'rgba(139, 92, 246, 0.15)'] : ['#6366F1', '#8B5CF6', '#A855F7']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.promoGradient}
@@ -368,50 +424,48 @@ export default function HomeScreen() {
                 style={styles.promoDismiss}
                 onPress={() => setPromoDismissed(true)}
               >
-                <Ionicons name="close" size={18} color="rgba(255,255,255,0.6)" />
+                <Ionicons name="close" size={16} color="rgba(255,255,255,0.5)" />
               </TouchableOpacity>
               
               <View style={styles.promoContent}>
                 <View style={styles.promoIconRow}>
-                  <Ionicons name="diamond" size={28} color="#fff" />
+                  <Ionicons name="diamond" size={24} color={isDark ? COLORS.primary : '#fff'} />
                   <View style={styles.promoFeatures}>
-                    <View style={styles.promoFeatureTag}>
-                      <Ionicons name="location" size={10} color="#fff" />
-                      <Text style={styles.promoFeatureText}>Unlimited Locations</Text>
+                    <View style={[styles.promoFeatureTag, isDark && { backgroundColor: 'rgba(99, 102, 241, 0.2)' }]}>
+                      <Ionicons name="location" size={10} color={isDark ? COLORS.primary : '#fff'} />
+                      <Text style={[styles.promoFeatureText, isDark && { color: COLORS.primaryLight }]}>Unlimited</Text>
                     </View>
-                    <View style={styles.promoFeatureTag}>
-                      <Ionicons name="notifications" size={10} color="#fff" />
-                      <Text style={styles.promoFeatureText}>Smart Reminders</Text>
+                    <View style={[styles.promoFeatureTag, isDark && { backgroundColor: 'rgba(99, 102, 241, 0.2)' }]}>
+                      <Ionicons name="notifications" size={10} color={isDark ? COLORS.primary : '#fff'} />
+                      <Text style={[styles.promoFeatureText, isDark && { color: COLORS.primaryLight }]}>Smart</Text>
                     </View>
                   </View>
                 </View>
                 
-                <Text style={styles.promoTitle}>Unlock Full Power of Forgetly</Text>
-                <Text style={styles.promoSubtitle}>
-                  Never forget anything with unlimited locations, smart reminders, and advanced insights.
+                <Text style={[styles.promoTitle, isDark && { color: '#E0E0FF' }]}>
+                  Unlock Full Power
+                </Text>
+                <Text style={[styles.promoSubtitle, isDark && { color: 'rgba(224, 224, 255, 0.6)' }]}>
+                  Unlimited locations, smart reminders, and advanced insights.
                 </Text>
                 
-                {locations.length >= 2 && (
-                  <View style={styles.promoAlert}>
-                    <Ionicons name="warning" size={14} color="#FFD700" />
-                    <Text style={styles.promoAlertText}>
-                      You've reached the free location limit!
-                    </Text>
-                  </View>
-                )}
-                
                 <TouchableOpacity
-                  style={styles.promoCTA}
+                  style={[styles.promoCTA, isDark && { backgroundColor: COLORS.primary }]}
                   onPress={() => router.push('/paywall')}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="star" size={18} color="#6366F1" />
-                  <Text style={styles.promoCTAText}>Upgrade to Premium</Text>
+                  <Ionicons name="star" size={16} color={isDark ? '#fff' : '#6366F1'} />
+                  <Text style={[styles.promoCTAText, isDark && { color: '#fff' }]}>
+                    Upgrade to Premium
+                  </Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
           </View>
         )}
+        
+        {/* Bottom spacer */}
+        <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -422,239 +476,255 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
-  header: {
+  
+  // ── Compact Stats Row ────────────────────
+  compactStatsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    gap: 10,
+    marginBottom: 24,
   },
-  greeting: {
-    fontSize: FONTS.sizes.sm,
-  },
-  name: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: 'bold',
-  },
-  streakBadge: {
+  miniStatCard: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.streak + '20',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
+    gap: 10,
   },
-  streakText: {
-    color: COLORS.streak,
-    fontWeight: 'bold',
-    fontSize: FONTS.sizes.md,
-    marginLeft: SPACING.xs,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginBottom: SPACING.lg,
-  },
-  riskCard: {
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.lg,
-  },
-  riskHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  miniStatIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
   },
-  riskTitle: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '600',
+  miniStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
   },
-  riskValue: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: 'bold',
+  miniStatLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 1,
   },
-  riskBar: {
-    height: 8,
-    borderRadius: RADIUS.full,
-    marginBottom: SPACING.sm,
-  },
-  riskFill: {
-    height: '100%',
-    borderRadius: RADIUS.full,
-  },
-  riskMessage: {
-    fontSize: FONTS.sizes.sm,
-  },
+  
+  // ── Section Title ────────────────────
   sectionTitle: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '600',
-    marginBottom: SPACING.sm,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 14,
+    letterSpacing: -0.3,
   },
-  checklistScroll: {
-    marginBottom: SPACING.md,
+  
+  // ── Checklist Tabs ────────────────────
+  tabsScroll: {
+    marginBottom: 16,
   },
-  checklistScrollContent: {
-    paddingRight: SPACING.lg,
+  tabsContent: {
+    paddingRight: 20,
+    gap: 10,
   },
-  checklistChip: {
+  tabWrapper: {},
+  tabPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    marginRight: SPACING.sm,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 28,
+    gap: 8,
+  },
+  tabPillActive: {
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  tabPillInactive: {
     borderWidth: 1,
   },
-  checklistChipText: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '500',
-    marginLeft: SPACING.xs,
+  tabTextActive: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  previewCard: {
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.xl,
+  tabTextInactive: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  
+  // ── Glass Card (generic) ────────────────────
+  glassCard: {
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+  },
+  
+  // ── Checklist Preview ────────────────────
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   previewTitle: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   previewItems: {
-    fontSize: FONTS.sizes.sm,
-    marginBottom: SPACING.xs,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 8,
   },
   previewCount: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
-  exitButtonContainer: {
+  
+  // ── CTA Button ────────────────────
+  ctaContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: SPACING.lg,
+    marginVertical: 28,
+    height: PULSE_SIZE + 20,
+  },
+  outerGlow: {
+    position: 'absolute',
+    width: PULSE_SIZE + 30,
+    height: PULSE_SIZE + 30,
+    borderRadius: (PULSE_SIZE + 30) / 2,
+    backgroundColor: 'rgba(99, 102, 241, 0.08)',
   },
   pulseRing: {
     position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: COLORS.primary,
+    width: PULSE_SIZE,
+    height: PULSE_SIZE,
+    borderRadius: PULSE_SIZE / 2,
+    overflow: 'hidden',
   },
-  exitButton: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: COLORS.primary,
+  pulseGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: PULSE_SIZE / 2,
+  },
+  ctaButtonOuter: {
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  ctaButton: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_SIZE / 2,
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.large,
   },
-  exitButtonText: {
+  ctaInnerShadow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: {
     color: '#fff',
-    fontSize: FONTS.sizes.lg,
-    fontWeight: 'bold',
-    marginTop: SPACING.sm,
+    fontSize: 17,
+    fontWeight: '800',
+    marginTop: 8,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
-  exitButtonSubtext: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: FONTS.sizes.xs,
-    marginTop: SPACING.xs,
+  ctaSubtext: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
   },
+  
+  // ── Shared Lists / Location Cards ────────────────────
+  sharedListCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  sharedListIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sharedListTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  sharedListSub: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  sharedBadge: {
+    backgroundColor: COLORS.success,
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 7,
+  },
+  sharedBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  
+  // ── Nearby Location ────────────────────
   nearbyCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.md,
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 14,
+    gap: 12,
   },
   nearbyInfo: {
     flex: 1,
-    marginLeft: SPACING.sm,
   },
   nearbyLabel: {
-    fontSize: FONTS.sizes.xs,
+    fontSize: 11,
     fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   nearbyName: {
-    fontSize: FONTS.sizes.md,
+    fontSize: 15,
     fontWeight: '600',
+    marginTop: 2,
   },
-  locationsBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.lg,
-  },
-  locationsBtnIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-  },
-  locationsBtnText: {
-    flex: 1,
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '600',
-  },
-  locationsBtnBadge: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.full,
-    minWidth: 22,
-    height: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    marginRight: SPACING.sm,
-  },
-  locationsBtnBadgeText: {
-    color: '#fff',
-    fontSize: FONTS.sizes.xs,
-    fontWeight: 'bold',
-  },
-  sharedListsBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.lg,
-  },
-  sharedListsIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-  },
-  sharedListsTitle: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '600',
-  },
-  sharedListsSubtitle: {
-    fontSize: FONTS.sizes.xs,
-    marginTop: 1,
-  },
+  
+  // ── Premium Promo ────────────────────
   promoCard: {
-    borderRadius: RADIUS.lg,
+    borderRadius: 18,
     overflow: 'hidden',
-    marginBottom: SPACING.lg,
+    marginBottom: 14,
   },
   promoGradient: {
-    padding: SPACING.lg,
+    padding: 20,
   },
   promoDismiss: {
     position: 'absolute',
-    top: SPACING.sm,
-    right: SPACING.sm,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    top: 12,
+    right: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
@@ -664,77 +734,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
+    marginBottom: 12,
   },
   promoFeatures: {
     flexDirection: 'row',
-    gap: SPACING.xs,
+    gap: 8,
   },
   promoFeatureTag: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
     gap: 4,
   },
   promoFeatureText: {
     color: '#fff',
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '600',
   },
   promoTitle: {
     color: '#fff',
-    fontSize: FONTS.sizes.lg,
-    fontWeight: 'bold',
-    marginBottom: SPACING.xs,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+    letterSpacing: -0.3,
   },
   promoSubtitle: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: FONTS.sizes.sm,
-    lineHeight: 20,
-    marginBottom: SPACING.md,
-  },
-  promoAlert: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,215,0,0.15)',
-    padding: SPACING.sm,
-    borderRadius: RADIUS.sm,
-    marginBottom: SPACING.md,
-    gap: SPACING.xs,
-  },
-  promoAlertText: {
-    color: '#FFD700',
-    fontSize: FONTS.sizes.xs,
-    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 16,
   },
   promoCTA: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    gap: SPACING.xs,
+    paddingVertical: 13,
+    borderRadius: 14,
+    gap: 8,
   },
   promoCTAText: {
     color: '#6366F1',
-    fontSize: FONTS.sizes.md,
-    fontWeight: 'bold',
-  },
-  premiumBadgeHome: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-  premiumBadgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#1a1a2e',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

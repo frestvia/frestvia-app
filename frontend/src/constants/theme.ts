@@ -30,11 +30,11 @@ export const COLORS = {
   
   // Dark Theme
   dark: {
-    background: '#0F172A',
-    card: '#1E293B',
-    text: '#F8FAFC',
-    textSecondary: '#94A3B8',
-    border: '#334155',
+    background: '#0B0F1A',
+    card: '#151A2D',
+    text: '#F1F5F9',
+    textSecondary: '#8B95A8',
+    border: '#1F2740',
   },
   
   // Special

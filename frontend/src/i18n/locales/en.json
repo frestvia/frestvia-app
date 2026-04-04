@@ -91,6 +91,7 @@
   },
   "stats": {
     "title": "Forgetting Insights",
+    "shortTitle": "Insights",
     "subtitle": "Track your progress",
     "dayStreak": "Day Streak",
     "best": "Best: {{count}} days",
@@ -104,6 +105,7 @@
   },
   "history": {
     "title": "Exit History",
+    "shortTitle": "History",
     "subtitle": "Your past check routines",
     "noHistory": "No exit history yet",
     "startUsing": "Start using Exit Mode to track your routines",
