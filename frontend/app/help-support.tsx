@@ -6,6 +6,7 @@ import {
   ScrollView,
   Pressable,
   Animated,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -206,8 +207,7 @@ export default function HelpSupportScreen() {
               pressed && { opacity: 0.7, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
             onPress={() => {
-              const { Alert } = require('react-native');
-              Alert.alert('Email Support', 'For complex issues, email us at:\n\nsupport@forgetly.app\n\nWe typically respond within 24 hours.', [{ text: 'OK' }]);
+              Linking.openURL('mailto:Contact@frestvia.store?subject=Forgetly%20Support%20Request');
             }}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
@@ -216,8 +216,8 @@ export default function HelpSupportScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.contactTitle, { color: colors.text }]}>Email Support</Text>
-              <Text style={[styles.contactDesc, { color: colors.textSecondary }]}>
-                support@forgetly.app
+              <Text style={[styles.contactDesc, { color: COLORS.primary }]}>
+                Contact@frestvia.store
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
@@ -231,8 +231,7 @@ export default function HelpSupportScreen() {
               pressed && { opacity: 0.7, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
             onPress={() => {
-              const { Alert } = require('react-native');
-              Alert.alert('Bug Report', 'To report a bug:\n\n1. Describe what happened\n2. What you expected\n3. Your device model\n\nSend to: bugs@forgetly.app', [{ text: 'OK' }]);
+              Linking.openURL('mailto:Contact@frestvia.store?subject=Forgetly%20Bug%20Report');
             }}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
