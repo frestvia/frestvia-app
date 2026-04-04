@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -307,7 +308,16 @@ export default function SettingsScreen() {
           { backgroundColor: colors.card },
           SHADOWS.small,
         ]}>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              Alert.alert(
+                'Privacy Policy',
+                'Forgetly respects your privacy. Your data is stored locally on your device and securely in the cloud. We do not sell or share your personal information with third parties.\n\nData collected:\n• Account info (email)\n• Checklists and items\n• Location data (with permission)\n\nYou can delete your account and all data at any time.',
+                [{ text: 'OK' }]
+              );
+            }}
+          >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.primary + '20' }]}>
                 <Ionicons name="shield-checkmark" size={20} color={COLORS.primary} />
@@ -321,7 +331,16 @@ export default function SettingsScreen() {
           
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              Alert.alert(
+                'Terms of Service',
+                'By using Forgetly, you agree to the following:\n\n1. You must be 13+ years old to use this app.\n2. You are responsible for your account security.\n3. Do not use the app for unlawful purposes.\n4. We may update these terms with notice.\n5. Premium subscriptions are non-refundable after 7 days.\n\nForgetly is provided "as-is" without warranty.',
+                [{ text: 'OK' }]
+              );
+            }}
+          >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.success + '20' }]}>
                 <Ionicons name="document-text" size={20} color={COLORS.success} />
@@ -335,7 +354,25 @@ export default function SettingsScreen() {
           
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              Alert.alert(
+                'Rate Forgetly',
+                'Enjoying Forgetly? Your rating helps us improve and reach more people!',
+                [
+                  { text: 'Not Now', style: 'cancel' },
+                  {
+                    text: 'Rate Now',
+                    onPress: () => {
+                      // Will open app store when published
+                      Alert.alert('Thank you!', 'We appreciate your support!');
+                    },
+                  },
+                ]
+              );
+            }}
+          >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.streak + '20' }]}>
                 <Ionicons name="star" size={20} color={COLORS.streak} />
@@ -469,7 +506,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: 120,
   },
   sectionTitle: {
     fontSize: FONTS.sizes.sm,
