@@ -309,25 +309,12 @@ export default function SettingsScreen() {
           styles.card,
           { backgroundColor: colors.card },
         ]}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
-            ]}
-            android_ripple={{ color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', borderless: false }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => {
-              Alert.alert(
-                'Privacy Policy',
-                'Forgetly respects your privacy. Your data is stored locally on your device and securely in the cloud. We do not sell or share your personal information with third parties.\n\nData collected:\n• Account info (email)\n• Checklists and items\n• Location data (with permission)\n\nYou can delete your account and all data at any time.\n\nContact: Contact@frestvia.store',
-                [
-                  { text: 'Email Us', onPress: () => Linking.openURL('mailto:Contact@frestvia.store?subject=Privacy%20Inquiry').catch(() => {}) },
-                  { text: 'OK' },
-                ]
-              );
-            }}
+          <TouchableOpacity
+            style={styles.menuItem}
+            activeOpacity={0.7}
+            onPress={() => router.push('/privacy-policy')}
           >
-            <View style={styles.menuLeft} pointerEvents="none">
+            <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.primary + '20' }]}>
                 <Ionicons name="shield-checkmark" size={20} color={COLORS.primary} />
               </View>
@@ -336,26 +323,16 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </Pressable>
+          </TouchableOpacity>
           
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <Pressable
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
-            ]}
-            android_ripple={{ color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', borderless: false }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => {
-              Alert.alert(
-                'Terms of Service',
-                'By using Forgetly, you agree to the following:\n\n1. You must be 13+ years old to use this app.\n2. You are responsible for your account security.\n3. Do not use the app for unlawful purposes.\n4. We may update these terms with notice.\n5. Premium subscriptions are non-refundable after 7 days.\n\nForgetly is provided "as-is" without warranty.',
-                [{ text: 'OK' }]
-              );
-            }}
+          <TouchableOpacity
+            style={styles.menuItem}
+            activeOpacity={0.7}
+            onPress={() => router.push('/terms-of-service')}
           >
-            <View style={styles.menuLeft} pointerEvents="none">
+            <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.success + '20' }]}>
                 <Ionicons name="document-text" size={20} color={COLORS.success} />
               </View>
@@ -364,34 +341,28 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </Pressable>
+          </TouchableOpacity>
           
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
           
-          <Pressable
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
-            ]}
-            android_ripple={{ color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', borderless: false }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          <TouchableOpacity
+            style={styles.menuItem}
+            activeOpacity={0.7}
             onPress={() => {
-              Alert.alert(
-                'Rate Forgetly',
-                'Enjoying Forgetly? Your rating helps us improve and reach more people!',
-                [
-                  { text: 'Not Now', style: 'cancel' },
-                  {
-                    text: 'Rate Now',
-                    onPress: () => {
-                      Alert.alert('Thank you!', 'We appreciate your support!');
-                    },
-                  },
-                ]
-              );
+              if (Platform.OS === 'ios') {
+                Linking.openURL('itms-apps://itunes.apple.com/app/id000000000?action=write-review').catch(() => {
+                  Alert.alert('Rate Frestivia', 'Thank you for your support! Rating will be available once the app is published on the App Store.');
+                });
+              } else if (Platform.OS === 'android') {
+                Linking.openURL('market://details?id=com.frestivia.app').catch(() => {
+                  Alert.alert('Rate Frestivia', 'Thank you for your support! Rating will be available once the app is published on the Play Store.');
+                });
+              } else {
+                Alert.alert('Rate Frestivia', 'Thank you for your support! Rating will be available once the app is published.');
+              }
             }}
           >
-            <View style={styles.menuLeft} pointerEvents="none">
+            <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: COLORS.streak + '20' }]}>
                 <Ionicons name="star" size={20} color={COLORS.streak} />
               </View>
@@ -400,7 +371,7 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </Pressable>
+          </TouchableOpacity>
         </View>
         
         {/* App Info */}

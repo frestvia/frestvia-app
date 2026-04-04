@@ -1083,7 +1083,7 @@ class SupportChatRequest(BaseModel):
 
 @api_router.post("/support/chat")
 async def support_chat(data: SupportChatRequest, user: dict = Depends(get_current_user)):
-    """AI-powered support chat for Forgetly app."""
+    """AI-powered support chat for Frestivia app."""
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     llm_key = os.environ.get('EMERGENT_LLM_KEY')
@@ -1092,7 +1092,7 @@ async def support_chat(data: SupportChatRequest, user: dict = Depends(get_curren
     
     session_id = data.session_id or f"support-{user['id']}-{uuid.uuid4().hex[:8]}"
     
-    system_message = """You are Forgetly's friendly AI support assistant. You help users with the Forgetly app - a smart checklist and reminder app that helps people never forget items when leaving places.
+    system_message = """You are Frestivia's friendly AI support assistant. You help users with the Frestivia app - a smart checklist and reminder app that helps people never forget items when leaving places.
 
 KEY APP FEATURES you can help with:
 - Checklists: Create, edit, delete checklists with items. Users tap "I'M LEAVING" to enter exit mode and check off items.

@@ -1,5 +1,5 @@
 {
-  "app": { "name": "Forgetly", "tagline": "もう何も忘れない", "fullName": "Forgetly – スマートチェックリスト" },
+  "app": { "name": "Frestivia", "tagline": "もう何も忘れない", "fullName": "Frestivia – スマートチェックリスト" },
   "common": { "save": "保存", "cancel": "キャンセル", "delete": "削除", "edit": "編集", "add": "追加", "close": "閉じる", "back": "戻る", "next": "次へ", "done": "完了", "yes": "はい", "no": "いいえ", "ok": "OK", "or": "または", "error": "エラー", "success": "成功", "loading": "読み込み中...", "today": "今日", "yesterday": "昨日", "thisWeek": "今週", "thisMonth": "今月" },
   "auth": { "signIn": "ログイン", "signUp": "新規登録", "logout": "ログアウト", "email": "メール", "password": "パスワード", "confirmPassword": "パスワード確認", "fullName": "氏名", "createAccount": "アカウント作成", "continueAsGuest": "ゲストとして続行", "dontHaveAccount": "アカウントをお持ちでない？", "alreadyHaveAccount": "アカウントをお持ちの方", "welcomeBack": "おかえりなさい、", "guestUser": "ゲスト", "guestAccount": "ゲストアカウント", "limitedFeatures": "機能制限あり", "startJourney": "今すぐ始めましょう", "logoutConfirm": "ログアウトしますか？" },
   "home": { "selectChecklist": "チェックリストを選択", "itemsToCheck": "{{count}}個の確認項目", "imLeaving": "出かけます", "tapToCheck": "タップして確認", "itemsSaved": "セーフ", "forgotten": "忘れた", "riskScore": "リスクスコア", "highRisk": "リスク高 - よく確認して！", "moderateRisk": "リスク中 - 気をつけて！", "lowRisk": "問題なし - この調子で！", "nearLocation": "近くにいます", "suggestedChecklist": "おすすめリスト", "myLocations": "マイスポット" },

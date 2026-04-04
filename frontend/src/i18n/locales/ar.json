@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "Forgetly",
+    "name": "Frestivia",
     "tagline": "لا تنسَ أي شيء مجدداً",
-    "fullName": "Forgetly – قائمة الخروج الذكية"
+    "fullName": "Frestivia – قائمة الخروج الذكية"
   },
   "common": {
     "save": "حفظ",

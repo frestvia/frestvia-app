@@ -168,7 +168,7 @@ export default function HelpSupportScreen() {
               Chat with AI Support
             </Text>
             <Text style={[styles.chatCardDesc, { color: colors.textSecondary }]}>
-              Get instant help from our AI assistant. Available 24/7 for any questions about Forgetly.
+              Get instant help from our AI assistant. Available 24/7 for any questions about Frestivia.
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={22} color={COLORS.primary} />
@@ -223,7 +223,7 @@ export default function HelpSupportScreen() {
               styles.contactRow,
               pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
-            onPress={() => openEmail('Forgetly Support Request')}
+            onPress={() => openEmail('Frestivia Support Request')}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
             <View style={[styles.contactIcon, { backgroundColor: COLORS.success + '15' }]} pointerEvents="none">
@@ -247,7 +247,7 @@ export default function HelpSupportScreen() {
               styles.contactRow,
               pressed && { opacity: 0.6, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
             ]}
-            onPress={() => openEmail('Forgetly Bug Report')}
+            onPress={() => openEmail('Frestivia Bug Report')}
             android_ripple={{ color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
           >
             <View style={[styles.contactIcon, { backgroundColor: COLORS.error + '15' }]} pointerEvents="none">
@@ -268,7 +268,7 @@ export default function HelpSupportScreen() {
         {/* App Version */}
         <View style={styles.versionInfo}>
           <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-            Forgetly v1.0.0
+            Frestivia v1.0.0
           </Text>
         </View>
       </ScrollView>
