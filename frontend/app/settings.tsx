@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore, ThemeMode, Language } from '../src/store/settingsStore';
+import { useAuthStore } from '../src/store/authStore';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../src/constants/theme';
 import { LANGUAGES } from '../src/i18n';
 import { Button } from '../src/components/Button';
@@ -26,11 +27,18 @@ export default function SettingsScreen() {
     language,
     voiceEnabled,
     notificationsEnabled,
+    geofencingEnabled,
+    smartSuggestionsEnabled,
     setTheme,
     setLanguage,
     setVoiceEnabled,
     setNotificationsEnabled,
+    setGeofencingEnabled,
+    setSmartSuggestionsEnabled,
   } = useSettingsStore();
+  
+  const { isPremiumUser } = useAuthStore();
+  const isPremium = isPremiumUser();
   
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -192,6 +200,103 @@ export default function SettingsScreen() {
             </View>
           </TouchableOpacity>
         </View>
+        
+        {/* Premium Features Section */}
+        {isPremium && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              Premium Features
+            </Text>
+            <View style={[
+              styles.card,
+              { backgroundColor: colors.card, borderWidth: 1, borderColor: COLORS.premium + '20' },
+              SHADOWS.small,
+            ]}>
+              {/* Background Geofencing */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => setGeofencingEnabled(!geofencingEnabled)}
+              >
+                <View style={styles.menuLeft}>
+                  <View style={[styles.menuIcon, { backgroundColor: COLORS.primary + '20' }]}>
+                    <Ionicons name="navigate-circle" size={20} color={COLORS.primary} />
+                  </View>
+                  <View>
+                    <Text style={[styles.menuText, { color: colors.text }]}>
+                      Background Geofencing
+                    </Text>
+                    <Text style={[styles.menuSubtext, { color: colors.textSecondary }]}>
+                      Auto-remind when leaving locations
+                    </Text>
+                  </View>
+                </View>
+                <View style={[
+                  styles.toggle,
+                  { backgroundColor: geofencingEnabled ? COLORS.success : colors.border },
+                ]}>
+                  <View style={[
+                    styles.toggleKnob,
+                    { transform: [{ translateX: geofencingEnabled ? 20 : 0 }] },
+                  ]} />
+                </View>
+              </TouchableOpacity>
+              
+              <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+              
+              {/* Smart Suggestions */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => setSmartSuggestionsEnabled(!smartSuggestionsEnabled)}
+              >
+                <View style={styles.menuLeft}>
+                  <View style={[styles.menuIcon, { backgroundColor: '#F59E0B20' }]}>
+                    <Ionicons name="sparkles" size={20} color="#F59E0B" />
+                  </View>
+                  <View>
+                    <Text style={[styles.menuText, { color: colors.text }]}>
+                      Smart Suggestions
+                    </Text>
+                    <Text style={[styles.menuSubtext, { color: colors.textSecondary }]}>
+                      AI-powered checklist recommendations
+                    </Text>
+                  </View>
+                </View>
+                <View style={[
+                  styles.toggle,
+                  { backgroundColor: smartSuggestionsEnabled ? COLORS.success : colors.border },
+                ]}>
+                  <View style={[
+                    styles.toggleKnob,
+                    { transform: [{ translateX: smartSuggestionsEnabled ? 20 : 0 }] },
+                  ]} />
+                </View>
+              </TouchableOpacity>
+              
+              <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+              
+              {/* Advanced Analytics */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => router.push('/(tabs)/stats')}
+              >
+                <View style={styles.menuLeft}>
+                  <View style={[styles.menuIcon, { backgroundColor: COLORS.premium + '20' }]}>
+                    <Ionicons name="analytics" size={20} color={COLORS.premium} />
+                  </View>
+                  <View>
+                    <Text style={[styles.menuText, { color: colors.text }]}>
+                      Advanced Analytics
+                    </Text>
+                    <Text style={[styles.menuSubtext, { color: colors.textSecondary }]}>
+                      Trends, patterns & detailed insights
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
         
         {/* About Section */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>

@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: 160,
   },
   header: {
     marginBottom: SPACING.lg,

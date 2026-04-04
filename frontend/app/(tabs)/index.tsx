@@ -30,6 +30,7 @@ import { useChecklistStore, Checklist } from '../../src/store/checklistStore';
 import { useStatsStore } from '../../src/store/statsStore';
 import { useLocationStore } from '../../src/store/locationStore';
 import { useSharedListStore } from '../../src/store/sharedListStore';
+import { useSettingsStore } from '../../src/store/settingsStore';
 import { useLocation } from '../../src/hooks/useLocation';
 import { useTheme, COLORS, SPACING, RADIUS, FONTS, SHADOWS } from '../../src/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -57,6 +58,7 @@ export default function HomeScreen() {
   const { stats, fetchStats } = useStatsStore();
   const { locations, fetchLocations, nearbyLocation } = useLocationStore();
   const { lists: sharedLists, fetchLists: fetchSharedLists } = useSharedListStore();
+  const { geofencingEnabled, smartSuggestionsEnabled } = useSettingsStore();
   const { getCurrentPosition } = useLocation();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -442,6 +444,203 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* ── Premium Exclusive Features ── */}
+        {isPremium && (
+          <>
+            {/* Smart Suggestions Card */}
+            {smartSuggestionsEnabled && (
+              <View style={[styles.premiumFeatureCard, {
+                backgroundColor: cardBg,
+                borderColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#F59E0B30',
+                borderWidth: 1,
+              }, !isDark && SHADOWS.small]}>
+                <View style={styles.premiumFeatureHeader}>
+                  <View style={[styles.premiumFeatureIconWrap, { backgroundColor: '#F59E0B18' }]}>
+                    <Ionicons name="sparkles" size={18} color="#F59E0B" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.premiumFeatureTitle, { color: colors.text }]}>
+                      Smart Suggestions
+                    </Text>
+                    <Text style={[styles.premiumFeatureSubtitle, { color: colors.textSecondary }]}>
+                      AI-powered reminders for you
+                    </Text>
+                  </View>
+                  <View style={styles.premiumActiveBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color={COLORS.success} />
+                    <Text style={[styles.premiumActiveText, { color: COLORS.success }]}>Active</Text>
+                  </View>
+                </View>
+                <View style={styles.suggestionsList}>
+                  <View style={styles.suggestionRow}>
+                    <View style={[styles.suggestionDot, { backgroundColor: COLORS.primary }]} />
+                    <Text style={[styles.suggestionText, { color: colors.text }]} numberOfLines={1}>
+                      Add "Umbrella" — rain forecast tomorrow
+                    </Text>
+                  </View>
+                  <View style={styles.suggestionRow}>
+                    <View style={[styles.suggestionDot, { backgroundColor: COLORS.success }]} />
+                    <Text style={[styles.suggestionText, { color: colors.text }]} numberOfLines={1}>
+                      You rarely forget on weekends!
+                    </Text>
+                  </View>
+                  <View style={styles.suggestionRow}>
+                    <View style={[styles.suggestionDot, { backgroundColor: '#F59E0B' }]} />
+                    <Text style={[styles.suggestionText, { color: colors.text }]} numberOfLines={1}>
+                      Enable location reminders for office
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.premiumFeatureSeeAll}
+                  onPress={() => router.push('/(tabs)/stats')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.premiumFeatureSeeAllText, { color: COLORS.primary }]}>
+                    See All Insights
+                  </Text>
+                  <Ionicons name="arrow-forward" size={14} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Background Geofencing Status Card */}
+            <View style={[styles.premiumFeatureCard, {
+              backgroundColor: cardBg,
+              borderColor: isDark ? 'rgba(99, 102, 241, 0.2)' : COLORS.primary + '30',
+              borderWidth: 1,
+            }, !isDark && SHADOWS.small]}>
+              <View style={styles.premiumFeatureHeader}>
+                <View style={[styles.premiumFeatureIconWrap, { backgroundColor: COLORS.primary + '18' }]}>
+                  <Ionicons name="navigate-circle" size={18} color={COLORS.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.premiumFeatureTitle, { color: colors.text }]}>
+                    Background Geofencing
+                  </Text>
+                  <Text style={[styles.premiumFeatureSubtitle, { color: colors.textSecondary }]}>
+                    {geofencingEnabled ? 'Monitoring your saved locations' : 'Enable in Settings'}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.geofenceStatusDot,
+                  { backgroundColor: geofencingEnabled ? COLORS.success : colors.border }
+                ]}>
+                  <Ionicons
+                    name={geofencingEnabled ? 'radio' : 'radio-outline'}
+                    size={14}
+                    color={geofencingEnabled ? '#fff' : colors.textSecondary}
+                  />
+                </View>
+              </View>
+              {geofencingEnabled && locations.length > 0 && (
+                <View style={styles.geofenceLocations}>
+                  {locations.slice(0, 3).map((loc: any, idx: number) => (
+                    <View key={idx} style={[styles.geofenceLocationRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : colors.border }]}>
+                      <Ionicons name="location-outline" size={14} color={COLORS.primary} />
+                      <Text style={[styles.geofenceLocationName, { color: colors.text }]} numberOfLines={1}>
+                        {loc.name}
+                      </Text>
+                      <View style={[styles.geofenceRadiusBadge, { backgroundColor: COLORS.primary + '15' }]}>
+                        <Text style={[styles.geofenceRadiusText, { color: COLORS.primary }]}>
+                          {loc.radius || 100}m
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+              {geofencingEnabled && locations.length === 0 && (
+                <TouchableOpacity
+                  style={styles.geofenceAddLocation}
+                  onPress={() => router.push('/locations')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={COLORS.primary} />
+                  <Text style={[styles.geofenceAddText, { color: COLORS.primary }]}>
+                    Add locations to start monitoring
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {!geofencingEnabled && (
+                <TouchableOpacity
+                  style={styles.geofenceAddLocation}
+                  onPress={() => router.push('/settings')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="settings-outline" size={16} color={COLORS.primary} />
+                  <Text style={[styles.geofenceAddText, { color: COLORS.primary }]}>
+                    Enable in Settings
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Advanced Insights Quick Peek */}
+            <TouchableOpacity
+              style={[styles.premiumFeatureCard, styles.insightsQuickCard, {
+                backgroundColor: cardBg,
+                borderColor: isDark ? 'rgba(139, 92, 246, 0.2)' : COLORS.premium + '30',
+                borderWidth: 1,
+              }, !isDark && SHADOWS.small]}
+              onPress={() => router.push('/(tabs)/stats')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.premiumFeatureHeader}>
+                <View style={[styles.premiumFeatureIconWrap, { backgroundColor: COLORS.premium + '18' }]}>
+                  <Ionicons name="analytics" size={18} color={COLORS.premium} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.premiumFeatureTitle, { color: colors.text }]}>
+                    Advanced Analytics
+                  </Text>
+                  <Text style={[styles.premiumFeatureSubtitle, { color: colors.textSecondary }]}>
+                    Trends, patterns & insights
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={isDark ? 'rgba(255,255,255,0.3)' : colors.textSecondary} />
+              </View>
+              <View style={styles.insightsQuickStats}>
+                <View style={styles.insightsQuickItem}>
+                  <Text style={[styles.insightsQuickValue, { color: COLORS.success }]}>
+                    {stats?.items_saved_week || 0}
+                  </Text>
+                  <Text style={[styles.insightsQuickLabel, { color: colors.textSecondary }]}>
+                    Saved/wk
+                  </Text>
+                </View>
+                <View style={[styles.insightsQuickDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]} />
+                <View style={styles.insightsQuickItem}>
+                  <Text style={[styles.insightsQuickValue, { color: COLORS.error }]}>
+                    {stats?.items_forgotten_week || 0}
+                  </Text>
+                  <Text style={[styles.insightsQuickLabel, { color: colors.textSecondary }]}>
+                    Forgot/wk
+                  </Text>
+                </View>
+                <View style={[styles.insightsQuickDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]} />
+                <View style={styles.insightsQuickItem}>
+                  <Text style={[styles.insightsQuickValue, { color: COLORS.primary }]}>
+                    {stats?.risk_score || 0}%
+                  </Text>
+                  <Text style={[styles.insightsQuickLabel, { color: colors.textSecondary }]}>
+                    Risk
+                  </Text>
+                </View>
+                <View style={[styles.insightsQuickDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]} />
+                <View style={styles.insightsQuickItem}>
+                  <Text style={[styles.insightsQuickValue, { color: COLORS.streak }]}>
+                    {stats?.best_streak || 0}
+                  </Text>
+                  <Text style={[styles.insightsQuickLabel, { color: colors.textSecondary }]}>
+                    Best Streak
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </>
+        )}
+
         {/* Premium Promo Card */}
         {!isPremium && !promoDismissed && (
           <View style={[styles.promoCard, isDark && { borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)' }]}>
@@ -509,7 +708,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 32,
+    paddingBottom: 160,
   },
   
   // ── Compact Stats Row ────────────────────
@@ -830,5 +1029,175 @@ const styles = StyleSheet.create({
     color: '#6366F1',
     fontSize: 15,
     fontWeight: '700',
+  },
+
+  // ── Premium Badge ────────────────────
+  premiumBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 16,
+  },
+  premiumBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.premium,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+  },
+  premiumBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+
+  // ── Premium Feature Cards ────────────────────
+  premiumFeatureCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+  },
+  premiumFeatureHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  premiumFeatureIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  premiumFeatureTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  premiumFeatureSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  premiumActiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  premiumActiveText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  suggestionsList: {
+    marginTop: 14,
+    gap: 8,
+  },
+  suggestionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  suggestionDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  premiumFeatureSeeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(99, 102, 241, 0.12)',
+    gap: 6,
+  },
+  premiumFeatureSeeAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // ── Geofencing Card ────────────────────
+  geofenceStatusDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  geofenceLocations: {
+    marginTop: 12,
+  },
+  geofenceLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    gap: 10,
+  },
+  geofenceLocationName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  geofenceRadiusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  geofenceRadiusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  geofenceAddLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(99, 102, 241, 0.12)',
+    gap: 6,
+  },
+  geofenceAddText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // ── Insights Quick Card ────────────────────
+  insightsQuickCard: {},
+  insightsQuickStats: {
+    flexDirection: 'row',
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(139, 92, 246, 0.12)',
+  },
+  insightsQuickItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  insightsQuickValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  insightsQuickLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  insightsQuickDivider: {
+    width: 1,
+    height: 30,
+    alignSelf: 'center',
   },
 });

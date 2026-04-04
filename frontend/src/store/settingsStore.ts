@@ -11,6 +11,8 @@ interface SettingsState {
   language: Language;
   voiceEnabled: boolean;
   notificationsEnabled: boolean;
+  geofencingEnabled: boolean;
+  smartSuggestionsEnabled: boolean;
   isRTL: boolean;
   isLoading: boolean;
   
@@ -20,6 +22,8 @@ interface SettingsState {
   setLanguage: (language: Language) => Promise<void>;
   setVoiceEnabled: (enabled: boolean) => Promise<void>;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
+  setGeofencingEnabled: (enabled: boolean) => Promise<void>;
+  setSmartSuggestionsEnabled: (enabled: boolean) => Promise<void>;
 }
 
 const SETTINGS_KEY = '@forgetly_settings';
@@ -54,6 +58,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   language: 'en',
   voiceEnabled: true,
   notificationsEnabled: true,
+  geofencingEnabled: true,
+  smartSuggestionsEnabled: true,
   isRTL: false,
   isLoading: true,
   
@@ -68,6 +74,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           language: settings.language || 'en',
           voiceEnabled: settings.voiceEnabled ?? true,
           notificationsEnabled: settings.notificationsEnabled ?? true,
+          geofencingEnabled: settings.geofencingEnabled ?? true,
+          smartSuggestionsEnabled: settings.smartSuggestionsEnabled ?? true,
           isRTL: rtl,
           isLoading: false,
         });
@@ -111,6 +119,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ notificationsEnabled });
     await saveSettings(get());
   },
+
+  setGeofencingEnabled: async (geofencingEnabled) => {
+    set({ geofencingEnabled });
+    await saveSettings(get());
+  },
+
+  setSmartSuggestionsEnabled: async (smartSuggestionsEnabled) => {
+    set({ smartSuggestionsEnabled });
+    await saveSettings(get());
+  },
 }));
 
 const saveSettings = async (state: SettingsState) => {
@@ -120,6 +138,8 @@ const saveSettings = async (state: SettingsState) => {
       language: state.language,
       voiceEnabled: state.voiceEnabled,
       notificationsEnabled: state.notificationsEnabled,
+      geofencingEnabled: state.geofencingEnabled,
+      smartSuggestionsEnabled: state.smartSuggestionsEnabled,
     };
     await safeSetItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (error) {
