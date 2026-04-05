@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Frestvia",
-    "slug": "frestvia",
+    "name": "Forgetly",
+    "slug": "forgetly",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frestvia",
+    "scheme": "forgetly",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -50,7 +50,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "frestvia-smart-checklist"
+        "projectId": "forgetly-smart-checklist"
       }
     }
   }

@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "Frestvia",
+    "name": "Forgetly",
     "tagline": "Bir daha hiçbir şey unutma",
-    "fullName": "Frestvia – Akıllı Çıkış Kontrol Listesi"
+    "fullName": "Forgetly – Akıllı Çıkış Kontrol Listesi"
   },
   "common": {
     "save": "Kaydet",

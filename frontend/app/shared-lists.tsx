@@ -95,7 +95,7 @@ export default function SharedListsScreen() {
   const handleShareCode = async (list: SharedList) => {
     try {
       await Share.share({
-        message: `Join my shared list "${list.title}" on Frestvia! Use code: ${list.share_code}`,
+        message: `Join my shared list "${list.title}" on Forgetly! Use code: ${list.share_code}`,
       });
     } catch (error) {
       console.error('Share error:', error);

@@ -12,14 +12,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, COLORS, SPACING } from '../src/constants/theme';
 
-const SUPPORT_EMAIL = 'Contact@frestvia.store';
+const SUPPORT_EMAIL = 'Contact@forgetly.store';
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
   const { isDark, colors } = useTheme();
 
   const openEmail = () => {
-    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Frestvia Privacy Inquiry')}`).catch(() => {});
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Forgetly Privacy Inquiry')}`).catch(() => {});
   };
 
   const Section = ({ title, children }: { title: string; children: string }) => (
@@ -53,7 +53,7 @@ export default function PrivacyPolicyScreen() {
         </View>
 
         <Text style={[styles.intro, { color: colors.textSecondary }]}>
-          Frestvia ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.
+          Forgetly ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.
         </Text>
 
         <Section title="1. Information We Collect">
@@ -61,7 +61,7 @@ export default function PrivacyPolicyScreen() {
         </Section>
 
         <Section title="2. How We Use Your Information">
-{'Your information is used to:\n\n\u2022 Provide and maintain the Frestvia service\n\u2022 Send you location-based reminders when you leave a saved location\n\u2022 Sync your checklists across devices\n\u2022 Provide Smart Suggestions based on your patterns\n\u2022 Generate your personal analytics and insights\n\u2022 Process premium subscriptions\n\u2022 Respond to customer support requests'}
+{'Your information is used to:\n\n\u2022 Provide and maintain the Forgetly service\n\u2022 Send you location-based reminders when you leave a saved location\n\u2022 Sync your checklists across devices\n\u2022 Provide Smart Suggestions based on your patterns\n\u2022 Generate your personal analytics and insights\n\u2022 Process premium subscriptions\n\u2022 Respond to customer support requests'}
         </Section>
 
         <Section title="3. Permissions We Request">
@@ -73,7 +73,7 @@ export default function PrivacyPolicyScreen() {
         </Section>
 
         <Section title="5. Third-Party Services">
-{'Frestvia may use the following third-party services:\n\n\u2022 Authentication services for secure login\n\u2022 Cloud hosting for data sync\n\u2022 Analytics tools (anonymized data only)\n\nThese services have their own privacy policies and we encourage you to review them.'}
+{'Forgetly may use the following third-party services:\n\n\u2022 Authentication services for secure login\n\u2022 Cloud hosting for data sync\n\u2022 Analytics tools (anonymized data only)\n\nThese services have their own privacy policies and we encourage you to review them.'}
         </Section>
 
         <Section title="6. Your Rights">
@@ -81,7 +81,7 @@ export default function PrivacyPolicyScreen() {
         </Section>
 
         <Section title="7. Children's Privacy">
-{'Frestvia is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13.'}
+{'Forgetly is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13.'}
         </Section>
 
         <Section title="8. Changes to This Policy">

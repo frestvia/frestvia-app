@@ -12,14 +12,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, COLORS, SPACING } from '../src/constants/theme';
 
-const SUPPORT_EMAIL = 'Contact@frestvia.store';
+const SUPPORT_EMAIL = 'Contact@forgetly.store';
 
 export default function TermsOfServiceScreen() {
   const router = useRouter();
   const { isDark, colors } = useTheme();
 
   const openEmail = () => {
-    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Frestvia Terms Inquiry')}`).catch(() => {});
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Forgetly Terms Inquiry')}`).catch(() => {});
   };
 
   const Section = ({ title, children }: { title: string; children: string }) => (
@@ -53,11 +53,11 @@ export default function TermsOfServiceScreen() {
         </View>
 
         <Text style={[styles.intro, { color: colors.textSecondary }]}>
-          Welcome to Frestvia. By downloading, installing, or using our application, you agree to be bound by these Terms of Service. Please read them carefully.
+          Welcome to Forgetly. By downloading, installing, or using our application, you agree to be bound by these Terms of Service. Please read them carefully.
         </Text>
 
         <Section title="1. Acceptance of Terms">
-{'By creating an account or using Frestvia, you confirm that you are at least 13 years old and agree to comply with these Terms. If you do not agree, please do not use the app.'}
+{'By creating an account or using Forgetly, you confirm that you are at least 13 years old and agree to comply with these Terms. If you do not agree, please do not use the app.'}
         </Section>
 
         <Section title="2. Account Responsibilities">
@@ -77,11 +77,11 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="6. Intellectual Property">
-{'All content, features, and functionality of Frestvia are owned by us and are protected by international copyright, trademark, and other intellectual property laws. You may not copy, modify, or distribute any part of the app without our written consent.'}
+{'All content, features, and functionality of Forgetly are owned by us and are protected by international copyright, trademark, and other intellectual property laws. You may not copy, modify, or distribute any part of the app without our written consent.'}
         </Section>
 
         <Section title="7. Limitation of Liability">
-{'Frestvia is provided "as-is" without warranty of any kind. We are not liable for:\n\n\u2022 Any missed reminders or forgotten items\n\u2022 Data loss due to device failure or connectivity issues\n\u2022 Any indirect, incidental, or consequential damages\n\u2022 Actions taken based on Smart Suggestions'}
+{'Forgetly is provided "as-is" without warranty of any kind. We are not liable for:\n\n\u2022 Any missed reminders or forgotten items\n\u2022 Data loss due to device failure or connectivity issues\n\u2022 Any indirect, incidental, or consequential damages\n\u2022 Actions taken based on Smart Suggestions'}
         </Section>
 
         <Section title="8. Termination">

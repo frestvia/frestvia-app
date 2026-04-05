@@ -351,14 +351,14 @@ export default function SettingsScreen() {
             onPress={() => {
               if (Platform.OS === 'ios') {
                 Linking.openURL('itms-apps://itunes.apple.com/app/id000000000?action=write-review').catch(() => {
-                  Alert.alert('Rate Frestvia', 'Thank you for your support! Rating will be available once the app is published on the App Store.');
+                  Alert.alert('Rate Forgetly', 'Thank you for your support! Rating will be available once the app is published on the App Store.');
                 });
               } else if (Platform.OS === 'android') {
-                Linking.openURL('market://details?id=com.frestvia.app').catch(() => {
-                  Alert.alert('Rate Frestvia', 'Thank you for your support! Rating will be available once the app is published on the Play Store.');
+                Linking.openURL('market://details?id=com.forgetly.app').catch(() => {
+                  Alert.alert('Rate Forgetly', 'Thank you for your support! Rating will be available once the app is published on the Play Store.');
                 });
               } else {
-                Alert.alert('Rate Frestvia', 'Thank you for your support! Rating will be available once the app is published.');
+                Alert.alert('Rate Forgetly', 'Thank you for your support! Rating will be available once the app is published.');
               }
             }}
           >

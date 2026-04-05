@@ -28,7 +28,7 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
 
 # Create the main app
-app = FastAPI(title="Forgotten Item Reminder API")
+app = FastAPI(title="Forgetly API")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -1068,7 +1068,7 @@ async def delete_shared_list(list_id: str, user = Depends(get_current_user)):
 
 @api_router.get("/")
 async def root():
-    return {"message": "Forgotten Item Reminder API", "status": "healthy"}
+    return {"message": "Forgetly API", "status": "healthy"}
 
 @api_router.get("/health")
 async def health():
@@ -1083,7 +1083,7 @@ class SupportChatRequest(BaseModel):
 
 @api_router.post("/support/chat")
 async def support_chat(data: SupportChatRequest, user: dict = Depends(get_current_user)):
-    """AI-powered support chat for Frestvia app."""
+    """AI-powered support chat for Forgetly app."""
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     llm_key = os.environ.get('EMERGENT_LLM_KEY')
@@ -1092,7 +1092,7 @@ async def support_chat(data: SupportChatRequest, user: dict = Depends(get_curren
     
     session_id = data.session_id or f"support-{user['id']}-{uuid.uuid4().hex[:8]}"
     
-    system_message = """You are Frestvia's friendly AI support assistant. You help users with the Frestvia app - a smart checklist and reminder app that helps people never forget items when leaving places.
+    system_message = """You are Forgetly's friendly AI support assistant. You help users with the Forgetly app - a smart exit checklist app that helps people never forget items when leaving places.
 
 KEY APP FEATURES you can help with:
 - Checklists: Create, edit, delete checklists with items. Users tap "I'M LEAVING" to enter exit mode and check off items.
@@ -1115,7 +1115,7 @@ COMMON ISSUES:
 6. Voice not working -> Check Settings toggle and device volume.
 7. Dark mode issues -> Settings > Appearance > Theme.
 
-GUIDELINES: Be friendly, concise (<150 words), use emojis sparingly. If stuck, suggest Contact@frestvia.store."""
+GUIDELINES: Be friendly, concise (<150 words), use emojis sparingly. If stuck, suggest Contact@forgetly.store."""
 
     try:
         chat = LlmChat(

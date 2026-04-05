@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "Frestvia",
+    "name": "Forgetly",
     "tagline": "Never forget anything again",
-    "fullName": "Frestvia – Smart Exit Checklist"
+    "fullName": "Forgetly – Smart Exit Checklist"
   },
   "common": {
     "save": "Save",

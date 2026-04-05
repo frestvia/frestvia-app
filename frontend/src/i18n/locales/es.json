@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "Frestvia",
+    "name": "Forgetly",
     "tagline": "Nunca olvides nada otra vez",
-    "fullName": "Frestvia – Lista de Salida Inteligente"
+    "fullName": "Forgetly – Lista de Salida Inteligente"
   },
   "common": {
     "save": "Guardar",

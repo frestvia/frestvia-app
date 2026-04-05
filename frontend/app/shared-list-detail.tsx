@@ -66,7 +66,7 @@ export default function SharedListDetailScreen() {
     if (!currentList) return;
     try {
       await Share.share({
-        message: `Join my shared list "${currentList.title}" on Frestvia! Use code: ${currentList.share_code}`,
+        message: `Join my shared list "${currentList.title}" on Forgetly! Use code: ${currentList.share_code}`,
       });
     } catch (error) {
       console.error('Share error:', error);

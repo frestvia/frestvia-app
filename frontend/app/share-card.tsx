@@ -32,7 +32,7 @@ export default function ShareCardScreen() {
 
     try {
       // Build share message
-      let msg = "I'm using Frestvia to never forget my important items. Try it now!";
+      let msg = "I'm using Forgetly to never forget my important items. Try it now!";
 
       const itemsSaved = stats?.total_items_checked || 0;
       const streak = stats?.current_streak || 0;
@@ -50,7 +50,7 @@ export default function ShareCardScreen() {
       // ONLY native Share API - NO iframe, NO webview, NO external URL
       await Share.share({
         message: msg,
-        title: 'Frestvia App',
+        title: 'Forgetly App',
       });
 
       console.log('SHARE COMPLETED');
@@ -61,7 +61,7 @@ export default function ShareCardScreen() {
       if (Platform.OS === 'web') {
         Alert.alert(
           'Share this message',
-          "I'm using Frestvia to never forget my important items. Try it now!",
+          "I'm using Forgetly to never forget my important items. Try it now!",
           [{ text: 'OK' }]
         );
       } else {
@@ -91,7 +91,7 @@ export default function ShareCardScreen() {
           {/* Card Header */}
           <View style={styles.cardHeader}>
             <Ionicons name="checkmark-circle" size={32} color="#fff" />
-            <Text style={styles.cardAppName}>Frestvia</Text>
+            <Text style={styles.cardAppName}>Forgetly</Text>
           </View>
 
           {/* User Info */}
@@ -129,18 +129,18 @@ export default function ShareCardScreen() {
           <View style={styles.cardMessage}>
             {stats?.total_items_forgotten && stats.total_items_forgotten > 0 ? (
               <Text style={styles.cardMessageText}>
-                I almost forgot {stats.total_items_forgotten} items... but Frestvia saved me!
+                I almost forgot {stats.total_items_forgotten} items... but Forgetly saved me!
               </Text>
             ) : (
               <Text style={styles.cardMessageText}>
-                Never forgotten a thing since using Frestvia!
+                Never forgotten a thing since using Forgetly!
               </Text>
             )}
           </View>
 
           {/* Footer */}
           <View style={styles.cardFooter}>
-            <Text style={styles.cardFooterText}>Download Frestvia and never forget anything!</Text>
+            <Text style={styles.cardFooterText}>Download Forgetly and never forget anything!</Text>
           </View>
         </View>
       </View>
