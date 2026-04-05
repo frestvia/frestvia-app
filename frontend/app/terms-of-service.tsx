@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, COLORS, SPACING } from '../src/constants/theme';
 
-const SUPPORT_EMAIL = 'Contact@forgetly.store';
+const SUPPORT_EMAIL = 'Contact@frestvia.store';
 
 export default function TermsOfServiceScreen() {
   const router = useRouter();

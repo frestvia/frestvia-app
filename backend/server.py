@@ -1115,7 +1115,7 @@ COMMON ISSUES:
 6. Voice not working -> Check Settings toggle and device volume.
 7. Dark mode issues -> Settings > Appearance > Theme.
 
-GUIDELINES: Be friendly, concise (<150 words), use emojis sparingly. If stuck, suggest Contact@forgetly.store."""
+GUIDELINES: Be friendly, concise (<150 words), use emojis sparingly. If stuck, suggest Contact@frestvia.store."""
 
     try:
         chat = LlmChat(
