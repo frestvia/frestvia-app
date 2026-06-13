@@ -14,3 +14,4 @@ litellm
 pydantic
 requests
 PyJWT
+email-validator
